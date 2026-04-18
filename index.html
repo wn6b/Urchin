@@ -8,85 +8,96 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <meta name="theme-color" content="#0a0a0f">
-    <title>Urchin | 2026 Edition</title>
+    <title>Discord - Urchin Official</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="auth-screen" class="active-screen">
-        <div class="urchin-logo-container"><i class="fa-solid fa-water"></i></div>
+    <div id="auth-screen">
         <div class="auth-box">
-            <h1>Urchin</h1>
-            <p id="auth-subtitle">Welcome Back!</p>
-            <div class="auth-form">
-                <div class="input-group" id="username-group" style="display: none;">
-                    <i class="fa-solid fa-user"></i>
-                    <input type="text" id="auth-username" placeholder="Username (Min 4 chars)">
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="auth-email" placeholder="Email Address">
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="auth-password" placeholder="Password (Min 6 chars)">
-                </div>
-                <button class="btn-login" id="auth-submit-btn" onclick="processAuth()">Login</button>
+            <h1 id="auth-title">Welcome back!</h1>
+            <p id="auth-subtitle">We're so excited to see you again!</p>
+            
+            <div class="input-group" id="username-group" style="display: none;">
+                <label>Username</label>
+                <input type="text" id="auth-username" autocomplete="off">
             </div>
+            
+            <div class="input-group">
+                <label>Email <span style="color: var(--danger);">*</span></label>
+                <input type="email" id="auth-email" autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label>Password <span style="color: var(--danger);">*</span></label>
+                <input type="password" id="auth-password">
+            </div>
+            
+            <button class="btn-login" id="auth-submit-btn" onclick="processAuth()">Log In</button>
             <div class="auth-footer">
-                <p id="auth-toggle-text">Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Register</span></p>
+                <span id="auth-toggle-text">Need an account? <span class="toggle-link" onclick="toggleAuthMode()">Register</span></span>
             </div>
         </div>
     </div>
 
     <div id="app-screen" style="display: none;">
+        
         <nav id="sidebar" class="sidebar">
             <div class="servers-list">
-                <div class="server-icon active-server"><i class="fa-solid fa-water"></i></div>
-                <div class="server-icon add-server"><i class="fa-solid fa-plus"></i></div>
+                <div class="server-icon active-server"><i class="fa-brands fa-discord"></i></div>
+                <div class="server-icon"><i class="fa-solid fa-water"></i></div>
+                <div class="server-icon" style="color: var(--success); background: #313338;"><i class="fa-solid fa-plus"></i></div>
             </div>
+            
             <div class="channels-panel">
                 <div class="server-header">
-                    <h2>Urchin Official</h2>
-                    <i class="fa-solid fa-chevron-down"></i>
+                    <span>Urchin Official</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size: 12px;"></i>
                 </div>
                 <div class="channels-list">
-                    <div class="category-title"><i class="fa-solid fa-angle-down"></i> TEXT CHANNELS</div>
+                    <div class="category-title"><i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-right: 4px;"></i> TEXT CHANNELS</div>
                     <div class="channel-item active-channel"><i class="fa-solid fa-hashtag"></i> <span>general</span></div>
+                    <div class="channel-item"><i class="fa-solid fa-hashtag"></i> <span>announcements</span></div>
                 </div>
+                
                 <div class="user-controls">
                     <div class="user-info-bar">
-                        <div class="avatar-wrapper">
-                            <img src="https://via.placeholder.com/150" alt="User" id="sidebarAvatar" class="sidebar-avatar">
-                            <div class="status-indicator online"></div>
-                        </div>
+                        <img src="https://i.imgur.com/vHqB3q0.png" alt="User" id="sidebarAvatar" class="sidebar-avatar">
                         <div class="user-name-role">
                             <strong id="sidebarUsername">User</strong>
-                            <span id="sidebarRole">#0000</span>
+                            <span id="sidebarRole">Online</span>
                         </div>
                     </div>
                     <div class="user-actions">
-                        <button aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
-                        <button aria-label="Logout" onclick="handleLogout()" style="color: #ff4757;"><i class="fa-solid fa-right-from-bracket"></i></button>
+                        <button><i class="fa-solid fa-microphone-slash"></i></button>
+                        <button><i class="fa-solid fa-headphones"></i></button>
+                        <button onclick="handleLogout()" style="color: var(--danger);" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
                     </div>
                 </div>
             </div>
         </nav>
+
         <main id="main-content" class="main-content">
             <header class="app-header">
-                <div class="header-left">
-                    <button id="mobileMenuBtn" class="hamburger-btn" style="background:none; border:none; color:white; font-size:20px; margin-right:10px;"><i class="fa-solid fa-bars"></i></button>
+                <div class="header-left" style="display: flex; align-items: center;">
+                    <button id="mobileMenuBtn" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
                     <div class="channel-info"><i class="fa-solid fa-hashtag"></i> <span>general</span></div>
                 </div>
+                <div class="header-right">
+                    <i class="fa-solid fa-user-group" style="color: var(--interactive-normal); font-size: 18px; cursor: pointer;"></i>
+                </div>
             </header>
-            <section class="chat-area" id="chat-messages"></section>
+            
+            <section class="chat-area" id="chat-messages">
+                </section>
+            
             <footer class="input-area">
                 <div class="input-wrapper">
-                    <button class="action-btn attach-btn"><i class="fa-solid fa-circle-plus"></i></button>
-                    <input type="text" id="messageInput" placeholder="Message #general..." autocomplete="off">
-                    <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button class="action-btn"><i class="fa-solid fa-circle-plus"></i></button>
+                    <input type="text" id="messageInput" placeholder="Message #general" autocomplete="off">
+                    <button class="action-btn"><i class="fa-solid fa-gift"></i></button>
+                    <button class="action-btn" id="sendBtn" style="color: var(--brand);"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </footer>
         </main>
@@ -96,13 +107,15 @@
         let isLoginMode = true;
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
-            document.getElementById('username-group').style.display = isLoginMode ? 'none' : 'flex';
-            document.getElementById('auth-submit-btn').innerText = isLoginMode ? 'Login' : 'Create Account';
-            document.getElementById('auth-subtitle').innerText = isLoginMode ? 'Welcome Back!' : 'Join Urchin Today!';
+            document.getElementById('username-group').style.display = isLoginMode ? 'none' : 'block';
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? 'Log In' : 'Continue';
+            document.getElementById('auth-title').innerText = isLoginMode ? 'Welcome back!' : 'Create an account';
+            document.getElementById('auth-subtitle').innerText = isLoginMode ? "We're so excited to see you again!" : "";
             document.getElementById('auth-toggle-text').innerHTML = isLoginMode ? 
-                'Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Register</span>' : 
-                'Already have an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Login</span>';
+                'Need an account? <span class="toggle-link" onclick="toggleAuthMode()">Register</span>' : 
+                '<span class="toggle-link" onclick="toggleAuthMode()">Already have an account?</span>';
         }
+
         document.getElementById('mobileMenuBtn').onclick = function() {
             document.getElementById('sidebar').classList.toggle('active');
         };
@@ -113,7 +126,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, set, get, push, onChildAdded, serverTimestamp, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // تم وضع المفاتيح الدقيقة المطابقة لصورتك 100%
+        // المفتاح الصحيح 100%
         const firebaseConfig = {
             apiKey: "AIzaSyBZc6wYIoRWErFDlspRMvd08ujx8vtgxPk",
             authDomain: "wano-studio.firebaseapp.com",
@@ -134,10 +147,20 @@
         window.handleSignup = async (email, password, username) => {
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
-                await createDatabaseProfile(cred.user, username);
-                alert("تم إنشاء حسابك كأول مستخدم (الأونر) بنجاح!");
+                
+                // تحديد رتبة الأونر (roleId = 1)
+                userData = {
+                    uid: cred.user.uid,
+                    email: email,
+                    username: username,
+                    roleId: 1, 
+                    badges: ["badge-owner", "badge-admin"],
+                    joinedAt: serverTimestamp()
+                };
+                await set(ref(db, `users/${cred.user.uid}`), userData);
+                alert("تم إنشاء حسابك بنجاح!");
             } catch (error) {
-                alert("خطأ أثناء الإنشاء: " + error.message);
+                alert("خطأ: " + error.message);
             }
         };
 
@@ -145,7 +168,7 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                alert("الإيميل أو كلمة المرور غير صحيحة!");
+                alert("الإيميل أو الباسوورد غير صحيح!");
             }
         };
 
@@ -155,7 +178,7 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             const username = document.getElementById('auth-username').value;
-            if (!email || !password) return alert("يرجى ملء جميع الحقول المطلوبة.");
+            if (!email || !password) return alert("املأ جميع الحقول");
             isLoginMode ? handleLogin(email, password) : handleSignup(email, password, username);
         };
 
@@ -163,28 +186,18 @@
             if (user) {
                 currentUser = user;
                 const snap = await get(ref(db, `users/${user.uid}`));
-                userData = snap.val();
+                userData = snap.val() || { username: "User", roleId: 0, badges: [] };
+                
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('app-screen').style.display = 'flex';
-                document.getElementById('sidebarUsername').innerText = userData?.username || "User";
+                document.getElementById('sidebarUsername').innerText = userData.username;
+                
                 initChatSystem();
             } else {
                 document.getElementById('auth-screen').style.display = 'flex';
                 document.getElementById('app-screen').style.display = 'none';
             }
         });
-
-        async function createDatabaseProfile(user, username) {
-            userData = {
-                uid: user.uid,
-                email: user.email,
-                username: username,
-                roleId: 1, 
-                badges: ["badge-owner", "badge-admin", "badge-1"],
-                joinedAt: serverTimestamp()
-            };
-            await set(ref(db, `users/${user.uid}`), userData);
-        }
 
         function initChatSystem() {
             const input = document.getElementById('messageInput');
@@ -198,24 +211,40 @@
                         username: userData.username,
                         roleId: userData.roleId,
                         text: text,
-                        timestamp: serverTimestamp()
+                        timestamp: Date.now()
                     });
                     input.value = "";
                 }
             };
+            
             sendBtn.onclick = sendMsg;
             input.onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
 
-            onChildAdded(query(ref(db, 'channels/general/messages'), limitToLast(50)), (data) => {
+            // استرجاع وعرض الرسائل (بستايل ديسكورد)
+            onChildAdded(query(ref(db, 'channels/general/messages'), limitToLast(100)), (data) => {
                 const m = data.val();
                 const div = document.createElement('div');
                 div.className = 'message';
-                const nameStyle = m.roleId === 1 ? 'color: #ff4757; font-weight: bold;' : '';
+                
+                // تمييز الأونر (roleId == 1)
+                const nameColor = m.roleId === 1 ? 'color: #f1c40f;' : 'color: var(--text-normal);';
+                
+                // نظام البادجات
+                let badgesHTML = '';
+                if(m.roleId === 1) {
+                    badgesHTML = `<span class="badge badge-owner" title="Owner"><i class="fa-solid fa-crown"></i></span>`;
+                }
+
+                // الوقت
+                const timeStr = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
                 div.innerHTML = `
-                    <img src="https://via.placeholder.com/150" class="msg-avatar">
+                    <img src="https://i.imgur.com/vHqB3q0.png" class="msg-avatar">
                     <div class="msg-content">
                         <div class="msg-header">
-                            <span class="msg-username" style="${nameStyle}">${m.username}</span>
+                            <span class="msg-username" style="${nameColor}">${m.username}</span>
+                            ${badgesHTML}
+                            <span class="msg-time">Today at ${timeStr}</span>
                         </div>
                         <div class="msg-text">${m.text}</div>
                     </div>
