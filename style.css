@@ -1,320 +1,206 @@
 /* =========================================
-   Urchin App - 2026 Ultimate UI/UX
-   Coded for Maximum Performance & Glassmorphism
+   Urchin App - 100% Discord Clone (2026)
 ========================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
 :root {
-    --bg-color: #09090e;
-    --sidebar-dark: #121217;
-    --sidebar-light: #1a1a24;
-    --glass-bg: rgba(25, 25, 35, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --primary-accent: #00d2ff; /* Urchin Blue */
-    --secondary-accent: #3a7bd5;
-    --text-main: #ffffff;
-    --text-muted: #8e8e93;
-    --danger: #ff4757;
-    --success: #2ed573;
-    --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    /* ألوان ديسكورد الأصلية */
+    --bg-primary: #313338; /* خلفية الدردشة */
+    --bg-secondary: #2b2d31; /* خلفية القنوات */
+    --bg-tertiary: #1e1f22; /* خلفية السيرفرات */
+    --bg-message-hover: #2e3035;
+    --text-normal: #dbdee1;
+    --text-muted: #949ba4;
+    --interactive-normal: #b5bac1;
+    --interactive-hover: #dbdee1;
+    --interactive-active: #ffffff;
+    --brand: #5865F2; /* لون ديسكورد البنفسجي/الأزرق */
+    --danger: #da373c;
+    --success: #23a559;
+    --scrollbar-auto-thumb: #1a1b1e;
+    --scrollbar-auto-track: #2b2d31;
+    --font-primary: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* يمنع المربع الأزرق المزعج بالموبايل */
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-normal);
+    font-family: var(--font-primary);
     height: 100vh;
-    overflow: hidden; /* يمنع التمرير الخارجي، التطبيق هو اللي يتمرر من الداخل */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
+/* شريط التمرير (Scrollbar) مثل ديسكورد */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-auto-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-auto-thumb); border-radius: 4px; }
+
 /* =========================================
-   1. Auth Screen (شاشة الدخول والإنشاء)
+   شاشة الدخول (Auth Screen)
 ========================================= */
 #auth-screen {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    background: radial-gradient(circle at top right, rgba(0, 210, 255, 0.15), transparent 50%),
-                radial-gradient(circle at bottom left, rgba(58, 123, 213, 0.15), transparent 50%),
-                var(--bg-color);
-    z-index: 1000;
-}
-
-.urchin-logo-container {
-    width: 100px; height: 100px;
-    background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-    border-radius: 30%;
+    position: fixed; inset: 0; z-index: 1000;
     display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);
-    margin-bottom: 30px;
-    font-size: 50px; color: white;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    background-image: url('https://i.imgur.com/Kx2i8wP.png'); /* خلفية ديسكورد كلاسيكية */
+    background-size: cover; background-position: center;
 }
 
 .auth-box {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 40px 30px;
-    width: 90%; max-width: 400px;
+    background: #313338;
+    padding: 32px; border-radius: 8px;
+    width: 90%; max-width: 480px;
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
     text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-.auth-box h1 { font-size: 28px; margin-bottom: 5px; }
-.auth-box p { color: var(--text-muted); margin-bottom: 25px; font-size: 14px; }
+.auth-box h1 { font-size: 24px; font-weight: 600; color: #f2f3f5; margin-bottom: 8px; }
+.auth-box p { color: var(--text-muted); font-size: 15px; margin-bottom: 20px; }
 
-.input-group {
-    position: relative;
-    margin-bottom: 15px;
-}
-
-.input-group i {
-    position: absolute;
-    left: 15px; top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-}
-
+.input-group { margin-bottom: 20px; text-align: left; }
+.input-group label { display: block; color: var(--text-muted); font-size: 12px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
 .input-group input {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--glass-border);
-    padding: 15px 15px 15px 45px;
-    color: var(--text-main);
-    border-radius: 12px;
-    outline: none;
-    font-size: 15px;
-    transition: 0.3s;
-}
-
-.input-group input:focus {
-    border-color: var(--primary-accent);
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+    width: 100%; background: #1e1f22; border: none;
+    color: var(--text-normal); padding: 10px; border-radius: 3px;
+    font-size: 16px; outline: none;
 }
 
 .btn-login {
-    width: 100%;
-    background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
-    border: none; border-radius: 12px;
-    color: white; font-weight: bold; font-size: 16px;
-    padding: 15px; margin-top: 10px;
-    cursor: pointer; transition: 0.2s;
+    width: 100%; background: var(--brand); color: white;
+    border: none; padding: 10px 16px; border-radius: 3px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
 }
+.btn-login:hover { background: #4752c4; }
 
-.btn-login:active { transform: scale(0.95); }
-
-.toggle-link {
-    color: var(--primary-accent);
-    cursor: pointer; font-weight: bold;
-}
+.auth-footer { margin-top: 10px; text-align: left; font-size: 14px; color: var(--text-muted); }
+.toggle-link { color: #00a8fc; cursor: pointer; }
+.toggle-link:hover { text-decoration: underline; }
 
 /* =========================================
-   2. Main App Layout (هيكلية ديسكورد)
+   هيكلية ديسكورد الرئيسية (Layout)
 ========================================= */
-#app-screen {
-    display: flex;
-    height: 100vh; width: 100vw;
-}
+#app-screen { display: flex; height: 100vh; width: 100vw; position: relative; }
 
-/* القائمة الجانبية المزدوجة (سيرفرات + قنوات) */
-.sidebar {
-    display: flex;
-    height: 100%;
-    z-index: 100;
-}
-
+/* 1. قائمة السيرفرات (أقصى اليسار) */
 .servers-list {
-    width: 70px;
-    background: var(--bg-color);
+    width: 72px; min-width: 72px; background: var(--bg-tertiary);
     display: flex; flex-direction: column; align-items: center;
-    padding: 15px 0; gap: 12px;
-    border-right: 1px solid var(--glass-border);
+    padding-top: 12px; gap: 8px; overflow-y: auto;
 }
 
 .server-icon {
-    width: 48px; height: 48px;
-    background: var(--sidebar-light);
-    border-radius: 50%;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 20px; cursor: pointer;
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--bg-primary); display: flex; justify-content: center; align-items: center;
+    color: var(--text-normal); cursor: pointer; font-size: 20px;
+    transition: 0.2s ease-in-out; position: relative;
+}
+.server-icon:hover, .server-icon.active-server { border-radius: 16px; background: var(--brand); color: white; }
+.server-icon.active-server::before {
+    content: ''; position: absolute; left: -12px; top: 4px;
+    width: 8px; height: 40px; background: white; border-radius: 0 4px 4px 0;
 }
 
-.server-icon:hover, .active-server {
-    border-radius: 16px;
-    background: var(--primary-accent);
-    color: #000;
-}
-
+/* 2. قائمة القنوات (الوسط) */
 .channels-panel {
-    width: 240px;
-    background: var(--sidebar-dark);
+    width: 240px; min-width: 240px; background: var(--bg-secondary);
     display: flex; flex-direction: column;
 }
 
 .server-header {
-    height: 60px;
-    padding: 0 15px;
+    height: 48px; min-height: 48px; padding: 0 16px;
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--glass-border);
-    font-weight: bold; cursor: pointer;
+    border-bottom: 1px solid #1f2023; font-weight: 600;
+    color: var(--text-normal); cursor: pointer; transition: background 0.2s;
 }
+.server-header:hover { background: rgba(255,255,255,0.02); }
 
-.channels-list {
-    flex: 1; overflow-y: auto;
-    padding: 15px 10px;
-}
-
-.category-title {
-    font-size: 11px; color: var(--text-muted); font-weight: bold;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 5px;
-}
-
+.channels-list { flex: 1; padding: 16px 8px; overflow-y: auto; }
+.category-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; padding-left: 2px; }
 .channel-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 10px; border-radius: 6px;
-    color: var(--text-muted); cursor: pointer;
-    margin-bottom: 4px; transition: 0.2s;
+    padding: 6px 8px; border-radius: 4px; display: flex; align-items: center; gap: 6px;
+    color: var(--text-muted); cursor: pointer; margin-bottom: 2px;
 }
+.channel-item:hover { background: rgba(255,255,255,0.06); color: var(--interactive-hover); }
+.channel-item.active-channel { background: rgba(255,255,255,0.09); color: var(--interactive-active); }
+.channel-item i { font-size: 18px; color: #80848e; }
 
-.channel-item.active-channel { background: rgba(255,255,255,0.08); color: white; }
-
-/* لوحة تحكم المستخدم أسفل القائمة */
+/* 3. لوحة تحكم المستخدم (أسفل القنوات) */
 .user-controls {
-    background: #0d0d12;
-    padding: 10px; display: flex; align-items: center; justify-content: space-between;
+    height: 52px; background: #232428; padding: 0 8px;
+    display: flex; align-items: center; justify-content: space-between;
 }
-
-.user-info-bar { display: flex; align-items: center; gap: 10px; }
-.avatar-wrapper { position: relative; }
-.sidebar-avatar { width: 35px; height: 35px; border-radius: 50%; }
-.status-indicator {
-    position: absolute; bottom: 0; right: 0;
-    width: 12px; height: 12px; border-radius: 50%;
-    border: 2px solid #0d0d12;
-}
-.status-indicator.online { background: var(--success); }
-
+.user-info-bar { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px; border-radius: 4px; }
+.user-info-bar:hover { background: rgba(255,255,255,0.1); }
+.sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; }
 .user-name-role { display: flex; flex-direction: column; }
-.user-name-role strong { font-size: 13px; }
-.user-name-role span { font-size: 11px; color: var(--text-muted); }
-
+.user-name-role strong { font-size: 14px; font-weight: 600; color: white; line-height: 1.2; }
+.user-name-role span { font-size: 12px; color: var(--text-muted); }
+.user-actions { display: flex; gap: 4px; }
 .user-actions button {
-    background: none; border: none; color: var(--text-muted);
-    font-size: 16px; margin-left: 8px; cursor: pointer; transition: 0.2s;
+    width: 32px; height: 32px; border-radius: 4px; background: transparent; border: none;
+    color: var(--interactive-normal); font-size: 16px; cursor: pointer;
 }
-.user-actions button:hover { color: white; }
+.user-actions button:hover { background: rgba(255,255,255,0.1); color: var(--interactive-hover); }
 
-/* =========================================
-   3. Main Chat Area (منطقة الدردشة الرئيسية)
-========================================= */
-.main-content {
-    flex: 1; display: flex; flex-direction: column;
-    background: var(--bg-color); position: relative;
-}
+/* 4. منطقة الدردشة الرئيسية */
+.main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); }
 
 .app-header {
-    height: 60px;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0 15px; border-bottom: 1px solid var(--glass-border);
-    backdrop-filter: blur(10px);
+    height: 48px; min-height: 48px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #1f2023;
 }
+.channel-info { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.channel-info i { color: #80848e; font-size: 20px; }
 
-.header-left, .header-right { display: flex; align-items: center; gap: 15px; }
-.channel-info { font-weight: bold; font-size: 18px; display: flex; gap: 8px; align-items: center; }
-.channel-info i { color: var(--text-muted); }
-.header-icon { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
-.user-profile-mini img { width: 35px; height: 35px; border-radius: 50%; }
-
-/* إخفاء القائمة الجانبية في الموبايل */
+/* نظام إخفاء القائمة في الموبايل (Responsive) */
+.sidebar { display: flex; height: 100%; transition: transform 0.3s ease; }
 @media (max-width: 768px) {
-    .sidebar { position: absolute; left: -100%; transition: 0.3s; box-shadow: 10px 0 20px rgba(0,0,0,0.5); }
-    .sidebar.active { left: 0; }
-    .hamburger-btn { display: block; background: none; border: none; color: white; font-size: 20px; }
+    .sidebar { position: absolute; z-index: 100; transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .hamburger-btn { display: block; margin-right: 12px; background: none; border: none; color: var(--text-normal); font-size: 20px; }
 }
 @media (min-width: 769px) { .hamburger-btn { display: none; } }
 
-.chat-area {
-    flex: 1; overflow-y: auto;
-    padding: 20px; display: flex; flex-direction: column; gap: 20px;
-    scroll-behavior: smooth;
+/* الرسائل (Discord Style) */
+.chat-area { flex: 1; padding: 16px 0; overflow-y: auto; display: flex; flex-direction: column; }
+.message {
+    display: flex; gap: 16px; padding: 4px 16px 4px 72px; position: relative;
+    margin-top: 17px;
 }
-.chat-area::-webkit-scrollbar { display: none; }
+.message:hover { background: var(--bg-message-hover); }
+.msg-avatar { position: absolute; left: 16px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+.msg-content { display: flex; flex-direction: column; }
+.msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.msg-username { font-size: 16px; font-weight: 600; color: var(--text-normal); cursor: pointer; }
+.msg-username:hover { text-decoration: underline; }
+.msg-time { font-size: 12px; color: var(--text-muted); }
+.msg-text { font-size: 16px; line-height: 1.375rem; color: var(--text-normal); word-break: break-word; }
 
-/* تصميم الرسائل */
-.message { display: flex; gap: 15px; animation: slideUp 0.3s ease; }
-@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* 5. البادجات (الرتب) */
+.badges-container { display: inline-flex; gap: 4px; margin-left: 4px; vertical-align: middle; }
+.badge { width: 16px; height: 16px; display: inline-flex; justify-content: center; align-items: center; font-size: 10px; border-radius: 3px; }
+.badge-owner { color: #f1c40f; } /* تاج أصفر */
+.badge-admin { color: #e74c3c; } /* درع أحمر */
 
-.msg-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-.msg-content { flex: 1; max-width: 85%; }
-.msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.msg-username { font-weight: bold; font-size: 15px; }
-.msg-time { font-size: 11px; color: var(--text-muted); }
-
-.msg-text {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    padding: 12px 16px;
-    border-radius: 0 16px 16px 16px;
-    font-size: 15px; line-height: 1.5;
-    word-break: break-word; display: inline-block;
-}
-
-/* =========================================
-   4. Badges (البادجات الأسطورية)
-========================================= */
-.badges-container { display: flex; gap: 4px; }
-.badge {
-    width: 18px; height: 18px; border-radius: 4px;
-    display: inline-flex; justify-content: center; align-items: center;
-    font-size: 11px;
-}
-.badge-owner { background: #ff4757; color: white; box-shadow: 0 0 10px rgba(255, 71, 87, 0.6); }
-.badge-admin { background: #ffa502; color: black; }
-.badge-developer { background: #2ed573; color: black; }
-.badge-nitro { background: #ff73fa; color: white; }
-.badge-1 { background: gold; color: black; font-weight: bold; }
-.badge-2 { background: silver; color: black; font-weight: bold; }
-.badge-3 { background: #cd7f32; color: white; font-weight: bold; }
-
-/* =========================================
-   5. Input Area (صندوق الكتابة)
-========================================= */
-.input-area { padding: 15px; background: var(--bg-color); }
+/* 6. صندوق الإدخال (Input Box) */
+.input-area { padding: 0 16px 24px 16px; }
 .input-wrapper {
-    display: flex; align-items: center;
-    background: var(--sidebar-light); border-radius: 24px;
-    padding: 8px 15px; gap: 12px;
+    background: #383a40; border-radius: 8px; padding: 0 16px;
+    display: flex; align-items: center; min-height: 44px;
 }
-.action-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
-.input-actions-right { display: flex; gap: 10px; }
-
+.action-btn { background: none; border: none; color: #b5bac1; font-size: 20px; padding: 10px; cursor: pointer; }
+.action-btn:hover { color: #dbdee1; }
 .input-wrapper input {
-    flex: 1; background: transparent; border: none;
-    color: white; outline: none; font-size: 15px; padding: 5px 0;
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text-normal); font-size: 16px; padding: 11px 0;
 }
-
-.send-btn {
-    background: var(--primary-accent); color: black;
-    width: 35px; height: 35px; border-radius: 50%;
-    display: flex; justify-content: center; align-items: center;
-    border: none; cursor: pointer; transition: 0.2s;
-}
-.send-btn:active { transform: scale(0.9); }
+.input-wrapper input::placeholder { color: #5c5e66; }
