@@ -1,49 +1,36 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a0f">
     <title>Urchin | 2026 Edition</title>
-
     <link rel="manifest" href="manifest.json">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="auth-screen" class="active-screen">
-        <div class="urchin-logo-container">
-            <i class="fa-solid fa-water"></i>
-        </div>
-        
+        <div class="urchin-logo-container"><i class="fa-solid fa-water"></i></div>
         <div class="auth-box">
             <h1>Urchin</h1>
             <p id="auth-subtitle">Welcome Back!</p>
-            
             <div class="auth-form">
                 <div class="input-group" id="username-group" style="display: none;">
                     <i class="fa-solid fa-user"></i>
                     <input type="text" id="auth-username" placeholder="Username (Min 4 chars)">
                 </div>
-
                 <div class="input-group">
                     <i class="fa-solid fa-envelope"></i>
                     <input type="email" id="auth-email" placeholder="Email Address">
                 </div>
-                
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
                     <input type="password" id="auth-password" placeholder="Password (Min 6 chars)">
                 </div>
-
-                <button class="btn-login" id="auth-submit-btn" onclick="processAuth()">
-                    Login
-                </button>
+                <button class="btn-login" id="auth-submit-btn" onclick="processAuth()">Login</button>
             </div>
-            
             <div class="auth-footer">
                 <p id="auth-toggle-text">Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Register</span></p>
             </div>
@@ -51,25 +38,20 @@
     </div>
 
     <div id="app-screen" style="display: none;">
-
         <nav id="sidebar" class="sidebar">
             <div class="servers-list">
                 <div class="server-icon active-server"><i class="fa-solid fa-water"></i></div>
                 <div class="server-icon add-server"><i class="fa-solid fa-plus"></i></div>
             </div>
-
             <div class="channels-panel">
                 <div class="server-header">
                     <h2>Urchin Official</h2>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
-                
                 <div class="channels-list">
                     <div class="category-title"><i class="fa-solid fa-angle-down"></i> TEXT CHANNELS</div>
                     <div class="channel-item active-channel"><i class="fa-solid fa-hashtag"></i> <span>general</span></div>
-                    <div class="channel-item"><i class="fa-solid fa-hashtag"></i> <span>announcements</span></div>
                 </div>
-
                 <div class="user-controls">
                     <div class="user-info-bar">
                         <div class="avatar-wrapper">
@@ -82,29 +64,20 @@
                         </div>
                     </div>
                     <div class="user-actions">
-                        <button aria-label="Settings" onclick="toggleSettings()"><i class="fa-solid fa-gear"></i></button>
-                        <button aria-label="Logout" onclick="window.handleLogout()" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></button>
+                        <button aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
+                        <button aria-label="Logout" onclick="handleLogout()" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i></button>
                     </div>
                 </div>
             </div>
         </nav>
-
         <main id="main-content" class="main-content">
             <header class="app-header">
                 <div class="header-left">
                     <button id="mobileMenuBtn" class="hamburger-btn" style="background:none; border:none; color:white; font-size:20px; margin-right:10px;"><i class="fa-solid fa-bars"></i></button>
                     <div class="channel-info"><i class="fa-solid fa-hashtag"></i> <span>general</span></div>
                 </div>
-                <div class="header-right">
-                    <div class="user-profile-mini">
-                        <img src="https://via.placeholder.com/150" alt="Avatar" class="user-avatar" id="currentUserAvatar">
-                    </div>
-                </div>
             </header>
-
-            <section class="chat-area" id="chat-messages">
-                </section>
-
+            <section class="chat-area" id="chat-messages"></section>
             <footer class="input-area">
                 <div class="input-wrapper">
                     <button class="action-btn attach-btn"><i class="fa-solid fa-circle-plus"></i></button>
@@ -117,53 +90,139 @@
 
     <script>
         let isLoginMode = true;
-
-        // تبديل واجهة الدخول/التسجيل
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
-            const usernameGroup = document.getElementById('username-group');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const toggleText = document.getElementById('auth-toggle-text');
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (isLoginMode) {
-                usernameGroup.style.display = 'none';
-                submitBtn.innerText = 'Login';
-                subtitle.innerText = 'Welcome Back!';
-                toggleText.innerHTML = 'Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Register</span>';
-            } else {
-                usernameGroup.style.display = 'flex';
-                submitBtn.innerText = 'Create Account';
-                subtitle.innerText = 'Join Urchin Today!';
-                toggleText.innerHTML = 'Already have an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Login</span>';
-            }
+            document.getElementById('username-group').style.display = isLoginMode ? 'none' : 'flex';
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? 'Login' : 'Create Account';
+            document.getElementById('auth-subtitle').innerText = isLoginMode ? 'Welcome Back!' : 'Join Urchin Today!';
+            document.getElementById('auth-toggle-text').innerHTML = isLoginMode ? 
+                'Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Register</span>' : 
+                'Already have an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Login</span>';
         }
-
-        // معالجة الضغط على الزر
-        function processAuth() {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const username = document.getElementById('auth-username').value;
-
-            if (!email || !password) {
-                alert("Please fill in all fields!");
-                return;
-            }
-
-            if (isLoginMode) {
-                window.handleLogin(email, password);
-            } else {
-                if (!username) { alert("Username is required!"); return; }
-                window.handleSignup(email, password, username);
-            }
-        }
-
-        // تفعيل القائمة الجانبية للموبايل
         document.getElementById('mobileMenuBtn').onclick = function() {
             document.getElementById('sidebar').classList.toggle('active');
         };
     </script>
 
-    <script type="module" src="script.js?v=2"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, push, onChildAdded, serverTimestamp, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // المفتاح الحقيقي هنا غصباً عن المتصفح
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZc6wYIoRWErfDLspRMvd08ujx8vtgxPk",
+            authDomain: "wano-studio.firebaseapp.com",
+            databaseURL: "https://wano-studio-default-rtdb.firebaseio.com",
+            projectId: "wano-studio",
+            storageBucket: "wano-studio.firebasestorage.app",
+            messagingSenderId: "464709722674",
+            appId: "1:464709722674:web:5393cdd4c00c033014122b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let currentUser = null;
+        let userData = null;
+
+        // دالة إنشاء حساب
+        window.handleSignup = async (email, password, username) => {
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await createDatabaseProfile(cred.user, username);
+                alert("تم إنشاء حسابك كأول مستخدم (الأونر) بنجاح!");
+            } catch (error) {
+                alert("خطأ: " + error.message);
+            }
+        };
+
+        // دالة تسجيل الدخول
+        window.handleLogin = async (email, password) => {
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert("الإيميل أو كلمة المرور خطأ!");
+            }
+        };
+
+        window.handleLogout = () => signOut(auth).then(() => window.location.reload());
+
+        // ربط الزر بالدوال
+        window.processAuth = () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const username = document.getElementById('auth-username').value;
+            if (!email || !password) return alert("املأ كل الحقول!");
+            isLoginMode ? handleLogin(email, password) : handleSignup(email, password, username);
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const snap = await get(ref(db, `users/${user.uid}`));
+                userData = snap.val();
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'flex';
+                document.getElementById('sidebarUsername').innerText = userData?.username || "User";
+                initChatSystem();
+            } else {
+                document.getElementById('auth-screen').style.display = 'flex';
+                document.getElementById('app-screen').style.display = 'none';
+            }
+        });
+
+        async function createDatabaseProfile(user, username) {
+            userData = {
+                uid: user.uid,
+                email: user.email,
+                username: username,
+                roleId: 1, // الأونر
+                badges: ["badge-owner", "badge-admin", "badge-1"],
+                joinedAt: serverTimestamp()
+            };
+            await set(ref(db, `users/${user.uid}`), userData);
+        }
+
+        function initChatSystem() {
+            const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            const sendMsg = () => {
+                const text = input.value.trim();
+                if (text) {
+                    push(ref(db, 'channels/general/messages'), {
+                        uid: userData.uid,
+                        username: userData.username,
+                        roleId: userData.roleId,
+                        text: text,
+                        timestamp: serverTimestamp()
+                    });
+                    input.value = "";
+                }
+            };
+            sendBtn.onclick = sendMsg;
+            input.onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
+
+            onChildAdded(query(ref(db, 'channels/general/messages'), limitToLast(50)), (data) => {
+                const m = data.val();
+                const div = document.createElement('div');
+                div.className = 'message';
+                const nameStyle = m.roleId === 1 ? 'color: #ff4757; font-weight: bold;' : '';
+                div.innerHTML = `
+                    <img src="https://via.placeholder.com/150" class="msg-avatar">
+                    <div class="msg-content">
+                        <div class="msg-header">
+                            <span class="msg-username" style="${nameStyle}">${m.username}</span>
+                        </div>
+                        <div class="msg-text">${m.text}</div>
+                    </div>
+                `;
+                document.getElementById('chat-messages').appendChild(div);
+                document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+            });
+        }
+    </script>
 </body>
 </html>
