@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a0f">
-    <title>Urchin App | 2026</title>
+    <title>Urchin | 2026 Edition</title>
 
     <link rel="manifest" href="manifest.json">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -43,7 +45,7 @@
             </div>
             
             <div class="auth-footer">
-                <p id="auth-toggle-text">Need an account? <span onclick="toggleAuthMode()" class="toggle-link">Register</span></p>
+                <p id="auth-toggle-text">Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Register</span></p>
             </div>
         </div>
     </div>
@@ -90,7 +92,7 @@
         <main id="main-content" class="main-content">
             <header class="app-header">
                 <div class="header-left">
-                    <button id="mobileMenuBtn" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+                    <button id="mobileMenuBtn" class="hamburger-btn" style="background:none; border:none; color:white; font-size:20px; margin-right:10px;"><i class="fa-solid fa-bars"></i></button>
                     <div class="channel-info"><i class="fa-solid fa-hashtag"></i> <span>general</span></div>
                 </div>
                 <div class="header-right">
@@ -116,7 +118,7 @@
     <script>
         let isLoginMode = true;
 
-        // دالة التبديل بين تسجيل الدخول وإنشاء حساب
+        // تبديل واجهة الدخول/التسجيل
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             const usernameGroup = document.getElementById('username-group');
@@ -128,16 +130,16 @@
                 usernameGroup.style.display = 'none';
                 submitBtn.innerText = 'Login';
                 subtitle.innerText = 'Welcome Back!';
-                toggleText.innerHTML = 'Need an account? <span onclick="toggleAuthMode()" class="toggle-link">Register</span>';
+                toggleText.innerHTML = 'Need an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Register</span>';
             } else {
                 usernameGroup.style.display = 'flex';
                 submitBtn.innerText = 'Create Account';
                 subtitle.innerText = 'Join Urchin Today!';
-                toggleText.innerHTML = 'Already have an account? <span onclick="toggleAuthMode()" class="toggle-link">Login</span>';
+                toggleText.innerHTML = 'Already have an account? <span onclick="toggleAuthMode()" class="toggle-link" style="color: var(--primary-accent); cursor: pointer; font-weight: bold;">Login</span>';
             }
         }
 
-        // دالة إرسال البيانات لمحرك الفايربيس الموجود بملف script.js
+        // معالجة الضغط على الزر
         function processAuth() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
@@ -149,17 +151,17 @@
             }
 
             if (isLoginMode) {
-                // استدعاء دالة الدخول من script.js
                 window.handleLogin(email, password);
             } else {
-                if (username.trim().length < 2) {
-                    alert("Username is required for registration!");
-                    return;
-                }
-                // استدعاء دالة الإنشاء من script.js
+                if (!username) { alert("Username is required!"); return; }
                 window.handleSignup(email, password, username);
             }
         }
+
+        // تفعيل القائمة الجانبية للموبايل
+        document.getElementById('mobileMenuBtn').onclick = function() {
+            document.getElementById('sidebar').classList.toggle('active');
+        };
     </script>
 
     <script type="module" src="script.js"></script>
