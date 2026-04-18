@@ -1,154 +1,297 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#0a0a0f">
-    <meta name="description" content="Urchin - The Future of Communication, 2026 Edition">
-    
-    <title>Urchin App</title>
+/**
+ * Urchin Engine v3.0 - 2026 Ultimate Security Edition
+ * Features: Geo-Blocking, Custom Email Auth, Urchin Warden AI (Auto-Mod)
+ */
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    sendEmailVerification, 
+    signOut, 
+    onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+    getDatabase, 
+    ref, set, get, push, onChildAdded, remove, update, serverTimestamp, query, limitToLast 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+// 1. إعدادات الفايربيس (يجب وضع المفاتيح من إعدادات مشروعك لحماية البيانات)
+const firebaseConfig = {
+  apiKey: "AIzaSyBZc6wYIoRWErfDLspRMvd08ujx8vtgxPk",
+  authDomain: "wano-studio.firebaseapp.com",
+  databaseURL: "https://wano-studio-default-rtdb.firebaseio.com",
+  projectId: "wano-studio",
+  storageBucket: "wano-studio.firebasestorage.app",
+  messagingSenderId: "464709722674",
+  appId: "1:464709722674:web:5393cdd4c00c033014122b"
+};
 
-    <div id="auth-screen" class="active-screen">
-        <div class="urchin-logo-container" aria-label="Urchin Logo">
-            <i class="fa-solid fa-water"></i>
-        </div>
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let currentUser = null;
+let userData = null;
+
+// ==========================================
+// 2. نظام الحماية الجغرافية (Block Specific Regions)
+// ==========================================
+async function enforceGeoBlocking() {
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        // الكود IL يرمز للكيان، سيتم تدمير واجهة الموقع فوراً إذا طابق
+        if (data.country_code === 'IL') {
+            document.body.innerHTML = `<div style="color:red; text-align:center; margin-top:20vh; font-size:24px;">
+                <b>Access Denied.</b><br>Urchin is blocked in your region.
+            </div>`;
+            throw new Error("Blocked Region");
+        }
+    } catch (e) {
+        console.warn("Geo-check passed or failed to load API.");
+    }
+}
+enforceGeoBlocking();
+
+// ==========================================
+// 3. نظام الذكاء الاصطناعي والمراقبة (Urchin Warden AI)
+// ==========================================
+const badWordsList = ["كلمة_سيئة1", "كلمة_سيئة2", "سب", "شتم", "nsfw_link"]; // ضف الكلمات هنا
+
+class UrchinAI {
+    static async scanMessage(text, uid) {
+        let isClean = true;
+        let lowerText = text.toLowerCase();
+
+        for (let word of badWordsList) {
+            if (lowerText.includes(word)) {
+                isClean = false;
+                break;
+            }
+        }
+
+        if (!isClean) {
+            // إعطاء ميوت لمدة 30 دقيقة (1800000 ملي ثانية)
+            const muteTime = Date.now() + 1800000;
+            await update(ref(db, `users/${uid}`), { mutedUntil: muteTime });
+            
+            // تنبيه المستخدم
+            alert("⚠️ Urchin AI: تم رصد ألفاظ غير لائقة. تم إعطاؤك ميوت لمدة 30 دقيقة.");
+            return false; // يمنع إرسال الرسالة
+        }
+        return true;
+    }
+
+    static checkMuteStatus() {
+        if (userData && userData.mutedUntil && Date.now() < userData.mutedUntil) {
+            const remaining = Math.ceil((userData.mutedUntil - Date.now()) / 60000);
+            alert(`🔇 أنت في وضع الصامت (Mute). يتبقى: ${remaining} دقيقة.`);
+            return true; // المستخدم معاقب
+        }
+        return false;
+    }
+}
+
+// ==========================================
+// 4. نظام تسجيل الدخول وإنشاء الحساب (Custom Auth)
+// ==========================================
+
+// دالة إنشاء حساب جديد
+window.handleSignup = async (email, password, username) => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
-        <div class="auth-box">
-            <h1>Urchin</h1>
-            <p id="auth-subtitle">Connect. Beyond Limits.</p>
-            
-            <button class="btn-login" id="loginBtn" aria-label="Login with Google">
-                <i class="fa-brands fa-google"></i> 
-                <span id="login-text">Login to Urchin</span>
-            </button>
-            
-            <div class="auth-footer">
-                <small>Secure connection via Firebase Auth</small>
+        // إرسال رسالة تحقق للجيميل
+        await sendEmailVerification(user);
+        alert("تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني (الجيميل) لتأكيد الحساب.");
+        
+        // حفظ البيانات في الفايربيس (النظام القديم للأوائل والبادجات يعمل هنا)
+        await createDatabaseProfile(user, username);
+        
+    } catch (error) {
+        alert("خطأ في الإنشاء: " + error.message);
+    }
+};
+
+// دالة تسجيل الدخول للحسابات الموجودة
+window.handleLogin = async (email, password) => {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        if (!userCredential.user.emailVerified) {
+            alert("يرجى تأكيد بريدك الإلكتروني أولاً!");
+            auth.signOut();
+            return;
+        }
+        console.log("تم تسجيل الدخول بنجاح.");
+    } catch (error) {
+        alert("البريد أو كلمة المرور غير صحيحة!");
+    }
+};
+
+// دالة تسجيل الخروج
+window.handleLogout = () => {
+    signOut(auth).then(() => {
+        window.location.reload();
+    });
+};
+
+// مراقبة حالة المستخدم (هل هو مسجل دخول أم لا)
+onAuthStateChanged(auth, async (user) => {
+    if (user && user.emailVerified) {
+        currentUser = user;
+        const snapshot = await get(ref(db, `users/${user.uid}`));
+        userData = snapshot.val();
+        
+        showAppScreen();
+        initChatSystem();
+    } else {
+        showAuthScreen();
+    }
+});
+
+// ==========================================
+// 5. إنشاء الملف الشخصي وقاعدة البيانات (First User God Mode)
+// ==========================================
+async function createDatabaseProfile(user, rawUsername) {
+    const countRef = ref(db, 'app_stats/total_users');
+    let sequence = 1;
+    
+    // إحصاء عدد المستخدمين
+    const snap = await get(countRef);
+    if(snap.exists()) sequence = snap.val() + 1;
+    await set(countRef, sequence);
+
+    let roleId = 0;
+    let badges = ["badge-nitro"];
+    let finalUsername = rawUsername.replace(/\s+/g, '').toLowerCase();
+
+    // أول شخص هو المالك المطلق
+    if (sequence === 1) {
+        roleId = 1;
+        badges = ["badge-1", "badge-admin", "badge-owner", "badge-developer"];
+    } else {
+        // فرض يوزر رباعي للمستخدمين العاديين
+        if (finalUsername.length < 4) {
+            finalUsername += Math.floor(1000 + Math.random() * 9000);
+        }
+    }
+
+    userData = {
+        uid: user.uid,
+        email: user.email,
+        username: finalUsername,
+        photoURL: "https://via.placeholder.com/150", // صورة افتراضية
+        roleId: roleId,
+        badges: badges,
+        sequenceId: sequence,
+        joinedAt: serverTimestamp(),
+        mutedUntil: 0 // لا يوجد ميوت مبدئياً
+    };
+
+    await set(ref(db, `users/${user.uid}`), userData);
+}
+
+// ==========================================
+// 6. محرك الدردشة والأداء العالي
+// ==========================================
+function initChatSystem() {
+    const input = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatArea = document.getElementById('chat-messages');
+
+    // إرسال الرسالة مع فحص الـ AI
+    const attemptSendMessage = async () => {
+        const text = input.value.trim();
+        if (!text) return;
+
+        // 1. فحص إذا كان المستخدم معاقب (Muted)
+        if (UrchinAI.checkMuteStatus()) return;
+
+        // 2. فحص محتوى الرسالة عبر الـ AI
+        const isClean = await UrchinAI.scanMessage(text, currentUser.uid);
+        if (!isClean) {
+            input.value = "";
+            return; // الـ AI أوقف الرسالة
+        }
+
+        // 3. إرسال الرسالة لقاعدة البيانات
+        const msgData = {
+            uid: userData.uid,
+            username: userData.username,
+            photo: userData.photoURL,
+            text: text,
+            roleId: userData.roleId,
+            badges: userData.badges,
+            timestamp: serverTimestamp()
+        };
+        
+        push(ref(db, 'channels/general/messages'), msgData);
+        input.value = "";
+    };
+
+    sendBtn.onclick = attemptSendMessage;
+    input.onkeypress = (e) => { if(e.key === 'Enter') attemptSendMessage(); };
+
+    // تحميل آخر 100 رسالة فقط (Pagination) لمنع التعليق
+    const messagesQuery = query(ref(db, 'channels/general/messages'), limitToLast(100));
+    onChildAdded(messagesQuery, (data) => {
+        renderMessage(data.val(), data.key);
+    });
+}
+
+function renderMessage(msg, msgId) {
+    const chatArea = document.getElementById('chat-messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message';
+    msgDiv.id = `msg-${msgId}`;
+
+    // تمييز المالك (الأونر)
+    const nameStyle = msg.roleId === 1 ? 'color: #ff4757; font-weight: bold;' : '';
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+
+    msgDiv.innerHTML = `
+        <img src="${msg.photo}" class="msg-avatar">
+        <div class="msg-content">
+            <div class="msg-header">
+                <span class="msg-username" style="${nameStyle}">${msg.username}</span>
+                <span class="msg-time">${time}</span>
             </div>
+            <div class="msg-text">${escapeHTML(msg.text)}</div>
         </div>
-    </div>
+    `;
+    chatArea.appendChild(msgDiv);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
 
-    <div id="app-screen" style="display: none;">
+// ==========================================
+// 7. إعدادات الواجهة والـ Settings (UI Handlers)
+// ==========================================
+function showAppScreen() {
+    // هذه الدوال تفترض وجود العناصر في ملف الـ HTML
+    if(document.getElementById('auth-screen')) document.getElementById('auth-screen').style.display = 'none';
+    if(document.getElementById('app-screen')) document.getElementById('app-screen').style.display = 'flex';
+}
 
-        <nav id="sidebar" class="sidebar">
-            
-            <div class="servers-list">
-                <div class="server-icon active-server">
-                    <i class="fa-solid fa-water"></i> </div>
-                <div class="server-icon add-server">
-                    <i class="fa-solid fa-plus"></i>
-                </div>
-            </div>
+function showAuthScreen() {
+    if(document.getElementById('auth-screen')) document.getElementById('auth-screen').style.display = 'flex';
+    if(document.getElementById('app-screen')) document.getElementById('app-screen').style.display = 'none';
+}
 
-            <div class="channels-panel">
-                <div class="server-header">
-                    <h2>Urchin Official</h2>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </div>
-                
-                <div class="channels-list">
-                    <div class="category-title">
-                        <i class="fa-solid fa-angle-down"></i> TEXT CHANNELS
-                    </div>
-                    <div class="channel-item active-channel">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <span>general</span>
-                    </div>
-                    <div class="channel-item">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <span>announcements</span>
-                    </div>
-                    <div class="channel-item">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <span>bot-commands</span>
-                    </div>
-                </div>
+// وظيفة لفتح قائمة الإعدادات (Settings)
+window.toggleSettings = () => {
+    const settingsPanel = document.getElementById('settings-panel');
+    if(settingsPanel) {
+        settingsPanel.classList.toggle('active');
+    } else {
+        console.log("جاري تطوير قائمة الإعدادات...");
+    }
+};
 
-                <div class="user-controls">
-                    <div class="user-info-bar">
-                        <div class="avatar-wrapper">
-                            <img src="" alt="User" id="sidebarAvatar" class="sidebar-avatar">
-                            <div class="status-indicator online"></div>
-                        </div>
-                        <div class="user-name-role">
-                            <strong id="sidebarUsername">User</strong>
-                            <span id="sidebarRole">#0000</span>
-                        </div>
-                    </div>
-                    <div class="user-actions">
-                        <button aria-label="Mute"><i class="fa-solid fa-microphone"></i></button>
-                        <button aria-label="Deafen"><i class="fa-solid fa-headphones"></i></button>
-                        <button aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <main id="main-content" class="main-content">
-            
-            <header class="app-header">
-                <div class="header-left">
-                    <button id="mobileMenuBtn" class="hamburger-btn">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div class="channel-info">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <span>general</span>
-                    </div>
-                </div>
-                
-                <div class="header-right">
-                    <button class="header-icon" aria-label="Threads"><i class="fa-solid fa-hashtag"></i></button>
-                    <button class="header-icon" aria-label="Members List"><i class="fa-solid fa-user-group"></i></button>
-                    <div class="user-profile-mini">
-                        <img src="" alt="Avatar" class="user-avatar" id="currentUserAvatar">
-                    </div>
-                </div>
-            </header>
-
-            <section class="chat-area" id="chat-messages">
-                <div class="welcome-banner">
-                    <div class="welcome-icon"><i class="fa-solid fa-hashtag"></i></div>
-                    <h1>Welcome to #general!</h1>
-                    <p>This is the start of the Urchin Official server.</p>
-                </div>
-                </section>
-
-            <footer class="input-area">
-                <div class="input-wrapper">
-                    <button class="action-btn attach-btn" aria-label="Upload File">
-                        <i class="fa-solid fa-circle-plus"></i>
-                    </button>
-                    
-                    <input type="text" id="messageInput" placeholder="Message #general..." autocomplete="off">
-                    
-                    <div class="input-actions-right">
-                        <button class="action-btn nitro-gift-btn" aria-label="Gift Nitro">
-                            <i class="fa-solid fa-gift"></i>
-                        </button>
-                        <button class="action-btn emoji-btn" aria-label="Emojis">
-                            <i class="fa-solid fa-face-smile"></i>
-                        </button>
-                    </div>
-                    
-                    <button class="send-btn" id="sendBtn" aria-label="Send Message">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-            </footer>
-            
-        </main>
-    </div>
-
-    <script type="module" src="script.js"></script>
-</body>
-</html>
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+}
