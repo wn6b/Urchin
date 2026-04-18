@@ -19,7 +19,7 @@ import {
 
 // 1. إعدادات الفايربيس (يجب وضع المفاتيح من إعدادات مشروعك لحماية البيانات)
 const firebaseConfig = {
-  apiKey: "AIzaSyBZc6wYIoRWErFDlspRMvd08ujx8vtgxPk",
+  apiKey: "AIzaSyBZc6wYIoRWErfDLspRMvd08ujx8vtgxPk",
   authDomain: "wano-studio.firebaseapp.com",
   databaseURL: "https://wano-studio-default-rtdb.firebaseio.com",
   projectId: "wano-studio",
