@@ -1,139 +1,194 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Urchin | المجرى المائي</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urchin - Social Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-3d-card">
-            <div class="urchin-logo-3d">
-                <i class="fa-solid fa-water"></i>
+    <div id="loading-screen" class="active">
+        <div class="loader"></div>
+        <p>Connecting to servers...</p>
+    </div>
+
+    <div id="auth-screen" class="hidden auth-container">
+        <div class="auth-box">
+            <div class="logo-container">
+                <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style="color: var(--accent);">
+                    <circle cx="32" cy="32" r="14" fill="currentColor" />
+                    <line x1="48" y1="32" x2="62" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="16" y1="32" x2="2" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="32" cy="32" r="6" fill="var(--bg)" />
+                </svg>
+                <h2>Urchin</h2>
             </div>
-            <h1 id="auth-title">انضم للمجرى</h1>
-            <p id="auth-subtitle">سجل دخولك في Urchin 2026</p>
-
-            <div class="auth-inputs">
-                <div class="input-3d" id="username-group" style="display: none;">
-                    <label>اسم المستخدم (رباعي حصراً)</label>
-                    <input type="text" id="auth-username" placeholder="مثال: wano_1" maxlength="20">
-                    <small id="user-hint">مسموح فقط: حروف صغيرة، أرقام، ( . _ - )</small>
-                </div>
-
-                <div class="input-3d">
-                    <label>البريد الإلكتروني</label>
-                    <input type="email" id="auth-email" placeholder="example@gmail.com">
-                </div>
-
-                <div class="input-3d">
-                    <label>كلمة المرور</label>
-                    <input type="password" id="auth-password" placeholder="••••••••">
-                </div>
-
-                <button class="btn-urch-primary" id="auth-submit-btn" onclick="processAuth()">دخول</button>
-            </div>
-
-            <div class="auth-switch">
-                <span id="auth-toggle-text">ليس لديك حساب؟ <strong onclick="toggleAuthMode()">إنشاء حساب</strong></span>
-            </div>
+            <input type="email" id="auth-email" placeholder="Email Address">
+            <input type="password" id="auth-password" placeholder="Password">
+            <button id="btn-login" class="btn-primary">Login</button>
+            <button id="btn-register" class="btn-secondary">Create Account</button>
+            <p id="auth-error" class="error-msg"></p>
         </div>
     </div>
 
-    <div id="app-screen" style="display: none;">
+    <div id="app-screen" class="hidden app-layout">
         
-        <aside class="urchin-sidebar">
-            <div class="brand-zone">
-                <div class="brand-logo"><i class="fa-solid fa-water"></i></div>
-            </div>
-
-            <nav class="nav-icons">
-                <div class="nav-item active" onclick="switchTab('dm')" title="الرسائل الخاصة">
-                    <i class="fa-solid fa-comment-dots"></i>
-                </div>
-                <div class="nav-item" onclick="switchTab('chat')" title="المجتمع">
-                    <i class="fa-solid fa-users-rectangle"></i>
-                </div>
-                <div class="nav-item store-icon" onclick="switchTab('store')" title="المتجر">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                </div>
-            </nav>
-
-            <div class="bottom-zone">
-                <div class="user-avatar-3d" onclick="openProfileSettings()">
-                    <img src="https://i.imgur.com/vHqB3q0.png" id="myAvatar">
-                    <div class="status-dot"></div>
+        <header class="top-bar">
+            <div class="brand">
+                <svg width="36" height="36" viewBox="0 0 64 64" fill="none" style="color: var(--accent);">
+                    <circle cx="32" cy="32" r="14" fill="currentColor" />
+                    <circle cx="32" cy="32" r="6" fill="var(--bg)" />
+                </svg>
+                <div class="brand-text">
+                    <div class="title">Urchin</div>
+                    <div class="copyright" id="header-copyright">© Loading...</div>
                 </div>
             </div>
-        </aside>
+            <div class="top-actions">
+                <button id="btn-new-post" class="btn-primary btn-sm"><span class="icon">+</span> Post</button>
+                <div id="my-profile-btn" class="avatar-clickable">
+                    <img id="my-avatar-top" src="" alt="Me" class="avatar avatar-sm">
+                    <div class="status-indicator online"></div>
+                </div>
+            </div>
+        </header>
 
-        <main class="main-stage">
+        <main class="main-content">
             
-            <section id="view-store" class="content-view" style="display: none;">
-                <header class="view-header">
-                    <h2><i class="fa-solid fa-cart-shopping"></i> متجر Urchin</h2>
-                    <div class="balance-display">
-                        <span id="user-coins">0</span> <i class="fa-solid fa-coins"></i>
+            <section id="view-home" class="view active fade-in">
+                <div class="stories-container" id="stories-list">
                     </div>
-                </header>
-                <div class="store-grid">
-                    <div class="store-card">
-                        <div class="theme-preview blue-theme"></div>
-                        <h3>ثيم المحيط الأزرق</h3>
-                        <p>السعر: 15 عملة</p>
-                        <button onclick="buyItem('theme_blue')">شراء</button>
+                <div id="posts-feed" class="feed-container">
+                    </div>
+            </section>
+
+            <section id="view-dms" class="view hidden fade-in split-view">
+                <div class="sidebar-list" id="dm-users-list">
+                    <div class="sidebar-title">Direct Messages</div>
+                    </div>
+                <div class="chat-area" id="dm-chat-area">
+                    <div class="empty-state">Select a conversation</div>
+                </div>
+            </section>
+
+            <section id="view-servers" class="view hidden fade-in split-view">
+                <div class="server-icons-list" id="server-icons">
+                    <div class="server-icon create-server-btn" id="btn-show-create-server">+</div>
+                </div>
+                <div class="channels-list" id="channels-list">
+                    <div class="sidebar-title" id="current-server-name">Select Server</div>
+                    <div id="categories-container"></div>
+                </div>
+                <div class="chat-area" id="server-chat-area">
+                    <div class="chat-header">
+                        <span id="current-channel-name"># Welcome</span>
+                        <button id="btn-fullscreen-chat" class="icon-btn" title="Fullscreen Chat">⛶</button>
+                    </div>
+                    <div class="chat-messages" id="server-messages"></div>
+                    <div class="chat-controls">
+                        <button id="btn-join-voice" class="btn-voice hidden">🎤 Join Voice</button>
+                        <button id="btn-toggle-mic" class="btn-voice hidden">🔇 Mute</button>
+                        <input type="text" id="server-msg-input" placeholder="Message...">
+                        <button id="btn-send-server-msg" class="btn-primary">Send</button>
                     </div>
                 </div>
             </section>
 
-            <section id="view-chat" class="content-view">
-                <header class="view-header">
-                    <div class="header-left">
-                        <button id="mobileMenu" class="mobile-only"><i class="fa-solid fa-bars"></i></button>
-                        <h2># الدردشة_العامة</h2>
+            <section id="view-settings" class="view hidden fade-in">
+                <div class="settings-container">
+                    <div class="profile-card">
+                        <div class="banner"></div>
+                        <div class="profile-info">
+                            <div class="avatar-wrapper">
+                                <img id="settings-avatar" src="" class="avatar avatar-lg">
+                                <button class="btn-edit-avatar" id="btn-trigger-file">📷</button>
+                                <input type="file" id="file-avatar-upload" accept="image/*" hidden>
+                            </div>
+                            <h2 id="settings-name-display">Loading...</h2>
+                            <p class="username" id="settings-username-display">@loading</p>
+                            <p class="bio" id="settings-bio-display"></p>
+                        </div>
                     </div>
-                </header>
-                <div id="chat-messages" class="messages-container"></div>
-                <footer class="chat-input-zone">
-                    <div class="input-bar-3d">
-                        <button class="plus-btn"><i class="fa-solid fa-circle-plus"></i></button>
-                        <input type="text" id="messageInput" placeholder="اكتب شيئاً عظيماً...">
-                        <button id="sendBtn" class="send-urchin"><i class="fa-solid fa-paper-plane"></i></button>
+
+                    <div class="edit-form card">
+                        <h3>Edit Profile</h3>
+                        <label>Display Name</label>
+                        <input type="text" id="edit-name">
+                        <label>Username (Max 4 chars, 3 for Owner) - Change every 42h</label>
+                        <div class="input-with-icon">
+                            <span>@</span>
+                            <input type="text" id="edit-username" maxlength="4">
+                        </div>
+                        <label>Bio</label>
+                        <textarea id="edit-bio" rows="3"></textarea>
+                        <button id="btn-save-profile" class="btn-primary">Save Changes</button>
                     </div>
-                </footer>
+                    
+                    <button id="btn-logout" class="btn-danger full-width" style="margin-top: 15px;">Logout</button>
+                </div>
             </section>
 
-            <section id="view-dm" class="content-view" style="display: none;">
-                <header class="view-header">
-                    <h2>الرسائل الخاصة</h2>
-                </header>
-                <div class="empty-state">
-                    <i class="fa-solid fa-ghost"></i>
-                    <p>لا توجد محادثات حالياً</p>
+            <section id="view-owner" class="view hidden fade-in">
+                <div class="settings-container">
+                    <h2 style="color: var(--danger);">👑 Owner Panel</h2>
+                    
+                    <div class="card">
+                        <h3>Reserve 3-Letter Username</h3>
+                        <input type="text" id="owner-special-username" placeholder="e.g. a1b" maxlength="3">
+                        <button id="btn-reserve-user" class="btn-primary">Reserve Username</button>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>Create Official Bot</h3>
+                        <input type="text" id="bot-name" placeholder="Bot Name">
+                        <textarea id="bot-bio" placeholder="Bot Bio" rows="2"></textarea>
+                        <label>Bot Avatar</label>
+                        <input type="file" id="bot-avatar-file" accept="image/*">
+                        <button id="btn-create-bot" class="btn-primary" style="margin-top: 10px;">Create Bot</button>
+                        <div id="bot-list-container" style="margin-top: 15px;"></div>
+                    </div>
                 </div>
             </section>
 
         </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="view-home">
+                <span class="icon">🏠</span> Home
+            </button>
+            <button class="nav-item" data-target="view-dms">
+                <span class="icon">💬</span> Messages
+            </button>
+            <button class="nav-item" data-target="view-servers">
+                <span class="icon">🎮</span> Servers
+            </button>
+            <button class="nav-item" data-target="view-settings">
+                <span class="icon">⚙️</span> Settings
+            </button>
+            <button class="nav-item hidden" id="nav-owner" data-target="view-owner" style="color: var(--danger);">
+                <span class="icon">👑</span> Owner
+            </button>
+        </nav>
     </div>
 
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <h3>تعديل الملف الشخصي</h3>
-            <div class="profile-edit-zone">
-                <img src="" id="edit-avatar-preview">
-                <input type="text" id="edit-bio" placeholder="اكتب بايو جذاب...">
-                <button onclick="saveProfileWithAI()">حفظ التغييرات</button>
-                <button onclick="closeModal()" class="btn-close">إلغاء</button>
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-profile" class="modal hidden">
+            <button class="btn-close-modal">✕</button>
+            <div class="modal-content profile-modal-content">
+                <img id="view-user-avatar" src="" class="avatar avatar-xl">
+                <h2 id="view-user-name"></h2>
+                <p class="username" id="view-user-username"></p>
+                <p id="view-user-bio"></p>
+                <div class="stats-row">
+                    <div><span id="view-user-lastlogin"></span><br><small>Last Login</small></div>
+                </div>
+                <button id="btn-dm-user" class="btn-primary full-width mt-10">Send Message</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
