@@ -1,192 +1,199 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urchin - Social Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>Urchin - 2026 Social Platform</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@300;400;600;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="loading-screen" class="active">
-        <div class="loader"></div>
-        <p>Connecting to servers...</p>
-    </div>
-
-    <div id="auth-screen" class="hidden auth-container">
-        <div class="auth-box">
-            <div class="logo-container">
-                <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style="color: var(--accent);">
-                    <circle cx="32" cy="32" r="14" fill="currentColor" />
-                    <line x1="48" y1="32" x2="62" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                    <line x1="16" y1="32" x2="2" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="32" cy="32" r="6" fill="var(--bg)" />
-                </svg>
-                <h2>Urchin</h2>
-            </div>
-            <input type="email" id="auth-email" placeholder="Email Address">
-            <input type="password" id="auth-password" placeholder="Password">
-            <button id="btn-login" class="btn-primary">Login</button>
-            <button id="btn-register" class="btn-secondary">Create Account</button>
-            <p id="auth-error" class="error-msg"></p>
+    <div id="loading-screen" class="screen flex-center col">
+        <div class="spinner"></div>
+        <h1 class="logo-text">Urchin</h1>
+        <p class="sub-text">Advanced Social Platform 2026</p>
+        <div class="progress-bar-container">
+            <div id="loading-progress" class="progress-bar"></div>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden app-layout">
-        
-        <header class="top-bar">
-            <div class="brand">
-                <svg width="36" height="36" viewBox="0 0 64 64" fill="none" style="color: var(--accent);">
-                    <circle cx="32" cy="32" r="14" fill="currentColor" />
-                    <circle cx="32" cy="32" r="6" fill="var(--bg)" />
-                </svg>
-                <div class="brand-text">
-                    <div class="title">Urchin</div>
-                    <div class="copyright" id="header-copyright">© Loading...</div>
-                </div>
+    <div id="auth-screen" class="screen flex-center hidden">
+        <div class="auth-box glass-panel">
+            <h1 class="logo-text text-center">Urchin</h1>
+            <p class="sub-text text-center mb-20">Your Real Social Network</p>
+            
+            <div class="tabs">
+                <button id="tab-login" class="tab active" onclick="switchAuthTab('login')">Sign In</button>
+                <button id="tab-register" class="tab" onclick="switchAuthTab('register')">Sign Up</button>
             </div>
-            <div class="top-actions">
-                <button id="btn-new-post" class="btn-primary btn-sm"><span class="icon">+</span> Post</button>
-                <div id="my-profile-btn" class="avatar-clickable">
-                    <img id="my-avatar-top" src="" alt="Me" class="avatar avatar-sm">
-                    <div class="status-indicator online"></div>
+
+            <div id="auth-form" class="flex-col gap-10">
+                <input type="text" id="auth-name" class="input-modern hidden" placeholder="Display Name">
+                <div class="input-wrapper hidden" id="auth-username-wrapper">
+                    <span class="prefix">@</span>
+                    <input type="text" id="auth-username" class="input-modern pl-30" placeholder="User (Max 4 chars)" maxlength="4">
                 </div>
+                <input type="email" id="auth-email" class="input-modern" placeholder="Email">
+                <input type="password" id="auth-password" class="input-modern" placeholder="Password">
+                <p id="auth-error" class="error-text"></p>
+                <button id="auth-submit-btn" class="btn-primary" onclick="handleAuth()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-screen" class="screen hidden flex-col">
+        <header class="top-bar">
+            <div class="left flex-row gap-10">
+                <button id="back-btn" class="icon-btn hidden" onclick="exitFullScreenChat()">🔙</button>
+                <h2 class="logo-text-small">Urchin <span id="user-badges" class="badges"></span></h2>
+            </div>
+            <div class="right flex-row gap-10">
+                <button id="btn-add-tri" class="btn-owner hidden" onclick="openModal('modal-tri')">⭐ Tri User</button>
+                <button id="btn-add-bot" class="btn-owner hidden" onclick="openModal('modal-bot')">🤖 Create Bot</button>
+                <div class="avatar-small" id="top-avatar" onclick="navTo('settings')"></div>
+                <button class="icon-btn text-danger" onclick="logout()">🚪</button>
             </div>
         </header>
 
-        <main class="main-content">
+        <main id="main-content" class="flex-1 flex-row overflow-hidden">
             
-            <section id="view-home" class="view active fade-in">
-                <div class="stories-container" id="stories-list">
-                    </div>
-                <div id="posts-feed" class="feed-container">
-                    </div>
-            </section>
+            <div id="page-home" class="page-content flex-1 overflow-y p-15 hidden">
+                <button class="btn-primary w-full mb-20" onclick="openModal('modal-post')">📝 Write a Post</button>
+                <div id="posts-container" class="flex-col gap-15"></div>
+            </div>
 
-            <section id="view-dms" class="view hidden fade-in split-view">
-                <div class="sidebar-list" id="dm-users-list">
-                    <div class="sidebar-title">Direct Messages</div>
-                    </div>
-                <div class="chat-area" id="dm-chat-area">
-                    <div class="empty-state">Select a conversation</div>
+            <div id="page-servers" class="page-content flex-1 flex-row hidden">
+                <div class="servers-sidebar glass-panel flex-col gap-10 p-10 overflow-y">
+                    <div id="server-list" class="flex-col gap-10"></div>
+                    <button class="server-icon btn-add" onclick="openModal('modal-create-server')">➕</button>
                 </div>
-            </section>
+                <div id="server-channels" class="channels-sidebar glass-panel flex-col p-10 hidden">
+                    <div id="active-server-header" class="server-header mb-10 pointer" onclick="openServerSettings()"></div>
+                    <div id="channels-list" class="flex-1 overflow-y flex-col gap-5"></div>
+                    
+                    <div id="voice-controls" class="voice-panel hidden">
+                        <p class="text-success bold mb-5">🟢 Voice Connected</p>
+                        <div class="flex-row gap-5">
+                            <button id="btn-mic" class="btn-success flex-1" onclick="toggleMic()">🎙️ Mic On</button>
+                            <button class="btn-danger" onclick="leaveVoice()">Disconnect</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="chat-area" class="flex-1 flex-col hidden bg-tertiary">
+                    <div id="chat-header" class="chat-header p-15 border-b"></div>
+                    <div id="chat-messages" class="flex-1 overflow-y p-15 flex-col gap-10"></div>
+                    <div class="chat-input-area p-10 border-t flex-row gap-10">
+                        <input type="text" id="chat-input" class="input-modern flex-1" placeholder="Type a message...">
+                        <button class="btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
 
-            <section id="view-servers" class="view hidden fade-in split-view">
-                <div class="server-icons-list" id="server-icons">
-                    <div class="server-icon create-server-btn" id="btn-show-create-server">+</div>
-                </div>
-                <div class="channels-list" id="channels-list">
-                    <div class="sidebar-title" id="current-server-name">Select Server</div>
-                    <div id="categories-container"></div>
-                </div>
-                <div class="chat-area" id="server-chat-area">
-                    <div class="chat-header">
-                        <span id="current-channel-name"># Welcome</span>
-                        <button id="btn-fullscreen-chat" class="icon-btn" title="Fullscreen Chat">⛶</button>
+            <div id="page-settings" class="page-content flex-1 overflow-y p-20 hidden">
+                <div class="settings-container max-w-500 mx-auto glass-panel p-20">
+                    <h2 class="mb-20">Profile Settings</h2>
+                    
+                    <div class="banner-preview mb-15 pointer" onclick="document.getElementById('file-banner').click()">
+                        <img id="settings-banner-img" src="" alt="">
+                        <div class="overlay flex-center">📷 Change Banner</div>
+                        <input type="file" id="file-banner" hidden accept="image/*">
                     </div>
-                    <div class="chat-messages" id="server-messages"></div>
-                    <div class="chat-controls">
-                        <button id="btn-join-voice" class="btn-voice hidden">🎤 Join Voice</button>
-                        <button id="btn-toggle-mic" class="btn-voice hidden">🔇 Mute</button>
-                        <input type="text" id="server-msg-input" placeholder="Message...">
-                        <button id="btn-send-server-msg" class="btn-primary">Send</button>
-                    </div>
-                </div>
-            </section>
 
-            <section id="view-settings" class="view hidden fade-in">
-                <div class="settings-container">
-                    <div class="profile-card">
-                        <div class="banner"></div>
-                        <div class="profile-info">
-                            <div class="avatar-wrapper">
-                                <img id="settings-avatar" src="" class="avatar avatar-lg">
-                                <button class="btn-edit-avatar" id="btn-trigger-file">📷</button>
-                                <input type="file" id="file-avatar-upload" accept="image/*" hidden>
+                    <div class="flex-row gap-15 mb-20 items-center">
+                        <div class="avatar-large relative pointer" onclick="document.getElementById('file-avatar').click()">
+                            <img id="settings-avatar-img" src="" alt="">
+                            <div class="overlay flex-center">📷</div>
+                            <input type="file" id="file-avatar" hidden accept="image/*">
+                        </div>
+                        <div class="flex-col">
+                            <h3 id="settings-display-name-text">...</h3>
+                            <p class="text-muted" id="settings-username-text">@...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex-col gap-15">
+                        <div>
+                            <label class="label-small">Display Name</label>
+                            <input type="text" id="set-displayname" class="input-modern">
+                        </div>
+                        <div>
+                            <label class="label-small">Bio</label>
+                            <textarea id="set-bio" class="input-modern" rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label class="label-small">Username (Change every 42h)</label>
+                            <div class="input-wrapper">
+                                <span class="prefix">@</span>
+                                <input type="text" id="set-username" class="input-modern pl-30" maxlength="4">
                             </div>
-                            <h2 id="settings-name-display">Loading...</h2>
-                            <p class="username" id="settings-username-display">@loading</p>
-                            <p class="bio" id="settings-bio-display"></p>
+                            <p id="username-timer" class="text-warning text-small mt-5 hidden"></p>
                         </div>
+                        <button class="btn-primary mt-10" onclick="saveSettings()">Save Changes</button>
                     </div>
 
-                    <div class="edit-form card">
-                        <h3>Edit Profile</h3>
-                        <label>Display Name</label>
-                        <input type="text" id="edit-name">
-                        <label>Username (Max 4 chars, 3 for Owner) - Change every 42h</label>
-                        <div class="input-with-icon">
-                            <span>@</span>
-                            <input type="text" id="edit-username" maxlength="4">
-                        </div>
-                        <label>Bio</label>
-                        <textarea id="edit-bio" rows="3"></textarea>
-                        <button id="btn-save-profile" class="btn-primary">Save Changes</button>
-                    </div>
-                    
-                    <button id="btn-logout" class="btn-danger full-width" style="margin-top: 15px;">Logout</button>
-                </div>
-            </section>
-
-            <section id="view-owner" class="view hidden fade-in">
-                <div class="settings-container">
-                    <h2 style="color: var(--danger);">👑 Owner Panel</h2>
-                    
-                    <div class="card">
-                        <h3>Reserve 3-Letter Username</h3>
-                        <input type="text" id="owner-special-username" placeholder="e.g. a1b" maxlength="3">
-                        <button id="btn-reserve-user" class="btn-primary">Reserve Username</button>
-                    </div>
-
-                    <div class="card" style="margin-top: 20px;">
-                        <h3>Create Official Bot</h3>
-                        <input type="text" id="bot-name" placeholder="Bot Name">
-                        <textarea id="bot-bio" placeholder="Bot Bio" rows="2"></textarea>
-                        <label>Bot Avatar</label>
-                        <input type="file" id="bot-avatar-file" accept="image/*">
-                        <button id="btn-create-bot" class="btn-primary" style="margin-top: 10px;">Create Bot</button>
-                        <div id="bot-list-container" style="margin-top: 15px;"></div>
+                    <div id="owner-bots-section" class="mt-30 hidden border-t pt-20">
+                        <h2 class="mb-10 text-accent">🤖 My Bots</h2>
+                        <div id="bots-list" class="flex-col gap-10"></div>
                     </div>
                 </div>
-            </section>
+            </div>
 
         </main>
 
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-target="view-home">
-                <span class="icon">🏠</span> Home
-            </button>
-            <button class="nav-item" data-target="view-dms">
-                <span class="icon">💬</span> Messages
-            </button>
-            <button class="nav-item" data-target="view-servers">
-                <span class="icon">🎮</span> Servers
-            </button>
-            <button class="nav-item" data-target="view-settings">
-                <span class="icon">⚙️</span> Settings
-            </button>
-            <button class="nav-item hidden" id="nav-owner" data-target="view-owner" style="color: var(--danger);">
-                <span class="icon">👑</span> Owner
-            </button>
+        <nav id="bottom-nav" class="bottom-bar flex-row justify-around p-10 bg-secondary border-t">
+            <button class="nav-btn active" onclick="navTo('home')">🏠<br>Home</button>
+            <button class="nav-btn" onclick="navTo('servers')">🌐<br>Servers</button>
+            <button class="nav-btn" onclick="navTo('settings')">⚙️<br>Settings</button>
         </nav>
     </div>
 
-    <div id="modal-overlay" class="hidden">
-        <div id="modal-profile" class="modal hidden">
-            <button class="btn-close-modal">✕</button>
-            <div class="modal-content profile-modal-content">
-                <img id="view-user-avatar" src="" class="avatar avatar-xl">
-                <h2 id="view-user-name"></h2>
-                <p class="username" id="view-user-username"></p>
-                <p id="view-user-bio"></p>
-                <div class="stats-row">
-                    <div><span id="view-user-lastlogin"></span><br><small>Last Login</small></div>
-                </div>
-                <button id="btn-dm-user" class="btn-primary full-width mt-10">Send Message</button>
-            </div>
+    <div id="modal-overlay" class="modal-overlay hidden flex-center" onclick="closeModal(event)">
+        
+        <div id="modal-post" class="modal-box hidden">
+            <h3 class="mb-10">New Post</h3>
+            <textarea id="post-text" class="input-modern mb-10" rows="4" placeholder="What's on your mind?"></textarea>
+            <button class="btn-primary w-full" onclick="submitPost()">Post</button>
         </div>
+
+        <div id="modal-create-server" class="modal-box hidden">
+            <h3 class="mb-10">Create Server</h3>
+            <input type="text" id="cs-name" class="input-modern mb-10" placeholder="Server Name">
+            <input type="text" id="cs-icon" class="input-modern mb-10" placeholder="Icon (Emoji) e.g. 🌐">
+            <button class="btn-primary w-full" onclick="submitCreateServer()">Create</button>
+        </div>
+
+        <div id="modal-server-settings" class="modal-box hidden">
+            <h3 class="mb-10">Server Settings</h3>
+            <input type="file" id="ss-banner" hidden accept="image/*">
+            <button class="btn-secondary w-full mb-10" onclick="document.getElementById('ss-banner').click()">Upload Server Banner</button>
+            <input type="text" id="ss-name" class="input-modern mb-10" placeholder="Server Name">
+            <textarea id="ss-bio" class="input-modern mb-10" placeholder="Server Bio"></textarea>
+            <button class="btn-primary w-full" onclick="saveServerSettings()">Save Server</button>
+        </div>
+
+        <div id="modal-tri" class="modal-box hidden">
+            <h3 class="mb-10 text-warning">⭐ Create Tri User</h3>
+            <input type="email" id="tri-email" class="input-modern mb-10" placeholder="User Email">
+            <input type="password" id="tri-pass" class="input-modern mb-10" placeholder="Temporary Password">
+            <input type="text" id="tri-username" class="input-modern mb-10" placeholder="Username (exactly 3 chars)" maxlength="3">
+            <button class="btn-warning w-full" onclick="submitTriUser()">Create Tri User</button>
+        </div>
+
+        <div id="modal-bot" class="modal-box hidden">
+            <h3 class="mb-10 text-accent">🤖 Create Bot</h3>
+            <div class="flex-center mb-10">
+                <div class="avatar-large relative pointer" onclick="document.getElementById('bot-avatar').click()">
+                    <img id="bot-avatar-preview" src="">
+                    <div class="overlay flex-center">📷</div>
+                    <input type="file" id="bot-avatar" hidden accept="image/*">
+                </div>
+            </div>
+            <input type="text" id="bot-name" class="input-modern mb-10" placeholder="Bot Name">
+            <textarea id="bot-bio" class="input-modern mb-10" placeholder="Bot Bio"></textarea>
+            <button class="btn-primary w-full" onclick="submitBot()">Create Bot</button>
+        </div>
+
     </div>
 
     <script type="module" src="app.js"></script>
