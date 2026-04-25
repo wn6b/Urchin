@@ -1,560 +1,396 @@
-// استيراد Firebase Modular SDK
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getDatabase, ref, set, get, onValue, push, child, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-// إعدادات قاعدة البيانات الخاصة بك
-const firebaseConfig = {
-    apiKey: "AIzaSyBZc6wYIoRWErFDlspRMvd08ujx8vtgxPk",
-    authDomain: "wano-studio.firebaseapp.com",
-    databaseURL: "https://wano-studio-default-rtdb.firebaseio.com",
-    projectId: "wano-studio",
-    storageBucket: "wano-studio.firebasestorage.app",
-    messagingSenderId: "464709722674",
-    appId: "1:464709722674:web:5393cdd4c00c033014122b"
-};
-
-// تهيئة Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-
-// ثوابت المالك (Owner)
+// ══════════════════════════════════════════════
+//  OWNER CONFIG & STORAGE
+// ══════════════════════════════════════════════
 const OWNER_EMAIL = "waylalyzydy51@gmail.com";
-const COOLDOWN_42H = 42 * 60 * 60 * 1000;
+const OWNER_PASS_HASH = "f2HgJv_E_yi_owner_urchin_2025"; 
 
-// متغيرات الحالة (State)
-let currentUser = null;
-let currentProfile = null;
-let activeServerId = null;
-let activeChannelId = null;
-let isMicOn = true;
+const S = {
+  get: (k, def = null) => { try { const v = localStorage.getItem("urchin_"+k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem("urchin_"+k, JSON.stringify(v)); } catch {} },
+  del: (k) => { try { localStorage.removeItem("urchin_"+k); } catch {} },
+};
 
-// -----------------------------------------------------
-// 1. نظام شاشة التحميل (Loading)
-// -----------------------------------------------------
+const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const hashPass = (p) => { let h = 0; for(let i=0;i<p.length;i++) h=((h<<5)-h)+p.charCodeAt(i), h|=0; return h.toString(36)+"_urchin"; };
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = {
+  users: S.get("users", {}),
+  posts: S.get("posts", []),
+  servers: S.get("servers", []),
+  bots: S.get("bots", []),
+  me: null,
+  page: 'home',
+  activeSid: null,
+  activeChId: null
+};
+
+function saveState() {
+  S.set("users", state.users);
+  S.set("posts", state.posts);
+  S.set("servers", state.servers);
+  S.set("bots", state.bots);
+}
+
+// ══════════════════════════════════════════════
+//  INIT & RENDER SYSTEM
+// ══════════════════════════════════════════════
 window.onload = () => {
-    let progress = 0;
-    const bar = document.getElementById('loading-progress');
-    const interval = setInterval(() => {
-        progress += Math.random() * 20;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(interval);
-            setTimeout(() => {
-                document.getElementById('loading-screen').classList.add('hidden');
-            }, 500);
-        }
-        bar.style.width = `${progress}%`;
-    }, 150);
-};
-
-// -----------------------------------------------------
-// 2. نظام المصادقة (Auth)
-// -----------------------------------------------------
-let authMode = 'login';
-window.switchAuthTab = (mode) => {
-    authMode = mode;
-    document.getElementById('tab-login').classList.toggle('active', mode === 'login');
-    document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-    document.getElementById('auth-name').classList.toggle('hidden', mode === 'login');
-    document.getElementById('auth-username-wrapper').classList.toggle('hidden', mode === 'login');
-    document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Sign In' : 'Sign Up';
-    document.getElementById('auth-error').innerText = '';
-};
-
-// متابعة حالة تسجيل الدخول (تبقى مسجلة حتى لو خرج المستخدم وعاد بعد سنين)
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        const snapshot = await get(child(ref(db), `users/${user.uid}`));
-        if (snapshot.exists()) {
-            currentProfile = snapshot.val();
-            updateLastSeen();
-            setupRealtimeListeners();
-            showApp();
-        }
+  setTimeout(() => {
+    document.getElementById('loading-screen').classList.add('hidden');
+    const sid = S.get("session");
+    if (sid && state.users[sid]) {
+      state.me = state.users[sid];
+      showApp();
     } else {
-        document.getElementById('auth-screen').classList.remove('hidden');
-        document.getElementById('app-screen').classList.add('hidden');
+      showAuth();
     }
-});
-
-window.handleAuth = async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value;
-    const err = document.getElementById('auth-error');
-    err.innerText = '';
-
-    try {
-        if (authMode === 'login') {
-            await signInWithEmailAndPassword(auth, email, password);
-        } else {
-            const name = document.getElementById('auth-name').value.trim();
-            const username = document.getElementById('auth-username').value.trim().toLowerCase();
-            
-            if (!name || !username) return err.innerText = 'Fill all fields';
-            if (username.length > 4) return err.innerText = 'Username max 4 chars';
-            
-            // تحقق من عدم تكرار اليوزر
-            const usersSnap = await get(ref(db, 'users'));
-            if (usersSnap.exists()) {
-                const users = usersSnap.val();
-                for (let key in users) {
-                    if (users[key].username === username) {
-                        return err.innerText = 'Username already taken!';
-                    }
-                }
-            }
-
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            
-            const isOwner = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
-            
-            const newProfile = {
-                uid: user.uid,
-                email: email,
-                displayName: name,
-                username: username,
-                bio: "",
-                avatar: "",
-                banner: "",
-                isOwner: isOwner,
-                isTri: false,
-                lastUsernameChange: 0,
-                joinedAt: Date.now(),
-                lastSeen: Date.now()
-            };
-            
-            await set(ref(db, `users/${user.uid}`), newProfile);
-        }
-    } catch (error) {
-        err.innerText = error.message;
-    }
+  }, 1000);
 };
 
-window.logout = () => { signOut(auth); location.reload(); };
-
-function updateLastSeen() {
-    if(currentUser) update(ref(db, `users/${currentUser.uid}`), { lastSeen: Date.now() });
+function showAuth() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('auth-screen').innerHTML = `
+    <div style="padding: 20px; text-align: center; margin-top: 50px;">
+      <h1 style="color: var(--accent); margin-bottom: 30px; font-size: 36px;">Urchin</h1>
+      <div style="background: var(--bg-secondary); padding: 20px; border-radius: 20px; border: 1px solid var(--border2);">
+        <h2 style="margin-bottom: 20px; font-size: 18px;">Sign In or Register</h2>
+        <input type="text" id="a-name" class="input-modern mb-10" placeholder="Display Name (For Register)" style="margin-bottom: 10px;">
+        <input type="text" id="a-user" class="input-modern mb-10" placeholder="Username (Max 4 chars)" maxlength="4" style="margin-bottom: 10px;">
+        <input type="email" id="a-email" class="input-modern mb-10" placeholder="Email" style="margin-bottom: 10px;">
+        <input type="password" id="a-pass" class="input-modern mb-10" placeholder="Password" style="margin-bottom: 10px;">
+        <button class="btn-primary w-full" onclick="handleAuth()" style="margin-bottom: 10px;">Login / Register</button>
+      </div>
+    </div>
+  `;
 }
-setInterval(updateLastSeen, 60000); // تحديث كل دقيقة
 
-// -----------------------------------------------------
-// 3. واجهة المستخدم والتنقل (UI & Navigation)
-// -----------------------------------------------------
+window.handleAuth = () => {
+  const email = document.getElementById('a-email').value.trim().toLowerCase();
+  const pass = document.getElementById('a-pass').value;
+  const user = document.getElementById('a-user').value.trim().toLowerCase();
+  const name = document.getElementById('a-name').value.trim();
+
+  if(!email || !pass) return alert("Email & Password required!");
+
+  // Owner logic
+  if(email === OWNER_EMAIL.toLowerCase()) {
+    let owner = Object.values(state.users).find(u => u.email === email);
+    if(!owner) {
+      owner = { id: "owner_"+uid(), email, username: "wano", displayName: "Marwan", avatar: null, banner: null, passHash: hashPass(pass), isOwner: true, isTri: true, joinedAt: Date.now() };
+      state.users[owner.id] = owner; saveState();
+    }
+    state.me = owner; S.set("session", owner.id); showApp(); return;
+  }
+
+  // Check login
+  let existing = Object.values(state.users).find(u => u.email === email);
+  if(existing) {
+    if(existing.passHash !== hashPass(pass)) return alert("Wrong password");
+    state.me = existing; S.set("session", existing.id); showApp(); return;
+  }
+
+  // Register
+  if(!user || !name) return alert("Username and Name required for register!");
+  if(user.length > 4) return alert("Username max 4 chars");
+  if(Object.values(state.users).find(u => u.username === user)) return alert("Username taken");
+
+  const newUser = { id: uid(), email, username: user, displayName: name, avatar: null, banner: null, passHash: hashPass(pass), isOwner: false, isTri: false, joinedAt: Date.now() };
+  state.users[newUser.id] = newUser; saveState();
+  state.me = newUser; S.set("session", newUser.id); showApp();
+};
+
 function showApp() {
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('app-screen').classList.remove('hidden');
-    
-    // إظهار أزرار المالك
-    if (currentProfile.isOwner) {
-        document.getElementById('btn-add-tri').classList.remove('hidden');
-        document.getElementById('btn-add-bot').classList.remove('hidden');
-        document.getElementById('owner-bots-section').classList.remove('hidden');
-    }
-
-    // الشارات (Badges)
-    let badges = '';
-    if(currentProfile.isOwner) badges += '<span class="badge-owner">OWNER 👑</span>';
-    if(currentProfile.isTri) badges += '<span class="badge-tri">TRI ⭐</span>';
-    document.getElementById('user-badges').innerHTML = badges;
-    
-    // الصورة المصغرة فوق
-    document.getElementById('top-avatar').style.backgroundImage = `url(${currentProfile.avatar || 'https://via.placeholder.com/150/111623/5b8def?text='+currentProfile.displayName[0]})`;
-    
-    navTo('home');
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  renderTopNav();
+  renderBottomNav();
+  navTo('home');
 }
 
-window.navTo = (page) => {
-    ['home', 'servers', 'settings'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
-    document.getElementById(`page-${page}`).classList.remove('hidden');
-    
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    event && event.currentTarget ? event.currentTarget.classList.add('active') : null;
-
-    if (page === 'settings') loadSettingsPage();
-};
-
-// -----------------------------------------------------
-// 4. رفع الصور (Base64)
-// -----------------------------------------------------
-function handleImageUpload(inputId, callback) {
-    const input = document.getElementById(inputId);
-    input.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => callback(e.target.result);
-            reader.readAsDataURL(file);
-        }
-    });
+function navTo(page) {
+  state.page = page;
+  renderBottomNav();
+  const main = document.getElementById('main-content');
+  main.className = "flex-1 overflow-y relative fade"; // reset animation
+  
+  if(page === 'home') main.innerHTML = renderHome();
+  if(page === 'servers') main.innerHTML = renderServers();
+  if(page === 'settings') main.innerHTML = renderSettings();
 }
 
-// -----------------------------------------------------
-// 5. الإعدادات وتغيير الملف الشخصي
-// -----------------------------------------------------
-function loadSettingsPage() {
-    document.getElementById('set-displayname').value = currentProfile.displayName;
-    document.getElementById('set-bio').value = currentProfile.bio || '';
-    document.getElementById('set-username').value = currentProfile.username;
-    
-    document.getElementById('settings-display-name-text').innerText = currentProfile.displayName;
-    document.getElementById('settings-username-text').innerText = '@' + currentProfile.username;
-    
-    if(currentProfile.avatar) document.getElementById('settings-avatar-img').src = currentProfile.avatar;
-    if(currentProfile.banner) document.getElementById('settings-banner-img').src = currentProfile.banner;
+// ══════════════════════════════════════════════
+//  UI RENDERING
+// ══════════════════════════════════════════════
 
-    // حساب وقت الكول داون (42 ساعة)
-    const timeSinceChange = Date.now() - (currentProfile.lastUsernameChange || 0);
-    const timeRemaining = Math.max(0, COOLDOWN_42H - timeSinceChange);
-    
-    const unInput = document.getElementById('set-username');
-    const timerText = document.getElementById('username-timer');
-    
-    if (timeRemaining > 0 && !currentProfile.isOwner) {
-        unInput.disabled = true;
-        const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-        timerText.innerText = `Wait ${hours}h to change username again.`;
-        timerText.classList.remove('hidden');
-    } else {
-        unInput.disabled = false;
-        timerText.classList.add('hidden');
-    }
+function renderTopNav() {
+  let ownerBtns = state.me.isOwner ? `
+    <button class="btn-owner" onclick="openModal('bot')">🤖 Bot</button>
+  ` : '';
+  document.getElementById('top-bar').innerHTML = `
+    <div style="font-weight:900; font-size:20px; color:var(--accent);">Urchin ${state.me.isOwner ? '<span style="font-size:10px;color:var(--warn)">OWNER</span>' : ''}</div>
+    <div class="flex-row gap-10 items-center">
+      ${ownerBtns}
+      <div class="avatar" style="width:34px;height:34px;background-image:url('${state.me.avatar||''}');background-color:var(--accent);" onclick="navTo('settings')">${!state.me.avatar ? state.me.displayName[0] : ''}</div>
+    </div>
+  `;
 }
 
-// تفعيل رفع صورة البروفايل والبنر (واجهة الإعدادات)
-let tempAvatar = null, tempBanner = null;
-handleImageUpload('file-avatar', (base64) => { tempAvatar = base64; document.getElementById('settings-avatar-img').src = base64; });
-handleImageUpload('file-banner', (base64) => { tempBanner = base64; document.getElementById('settings-banner-img').src = base64; });
-
-window.saveSettings = async () => {
-    const newName = document.getElementById('set-displayname').value.trim();
-    const newBio = document.getElementById('set-bio').value.trim();
-    let newUsername = document.getElementById('set-username').value.trim().toLowerCase();
-
-    if(!newName) return alert("Name required");
-
-    let updates = { displayName: newName, bio: newBio };
-    if (tempAvatar) updates.avatar = tempAvatar;
-    if (tempBanner) updates.banner = tempBanner;
-
-    // تغيير اليوزر
-    if (newUsername !== currentProfile.username && (!document.getElementById('set-username').disabled)) {
-        if(newUsername.length > 4 && !currentProfile.isOwner) return alert("Max 4 chars");
-        
-        // فحص التكرار
-        const usersSnap = await get(ref(db, 'users'));
-        let taken = false;
-        if(usersSnap.exists()){
-            Object.values(usersSnap.val()).forEach(u => {
-                if(u.username === newUsername && u.uid !== currentProfile.uid) taken = true;
-            });
-        }
-        if(taken) return alert("Username taken!");
-        
-        updates.username = newUsername;
-        updates.lastUsernameChange = Date.now();
-    }
-
-    await update(ref(db, `users/${currentProfile.uid}`), updates);
-    currentProfile = { ...currentProfile, ...updates }; // Update local
-    alert("Profile Updated Successfully!");
-    loadSettingsPage();
-};
-
-// -----------------------------------------------------
-// 6. حصريات المالك (Tri Users & Bots)
-// -----------------------------------------------------
-window.submitTriUser = async () => {
-    if(!currentProfile.isOwner) return;
-    const email = document.getElementById('tri-email').value;
-    const pass = document.getElementById('tri-pass').value;
-    const username = document.getElementById('tri-username').value.toLowerCase();
-    
-    if(username.length !== 3) return alert("Tri username must be exactly 3 chars!");
-    
-    try {
-        // إنشاء الحساب (يتطلب استخدام API واجهة خلفية عادة لإنشاء حساب بدون تسجيل الخروج، لكن للتبسيط في الواجهة سنقوم بحفظ بياناته ليقوم المالك بتسليمه)
-        alert("Due to Firebase Auth security, the Owner must create this account via Firebase Console and set the username manually in DB, OR use Admin SDK. In standard client JS, creating a user logs you out.");
-    } catch(e) { alert(e.message); }
-};
-
-let tempBotAvatar = null;
-handleImageUpload('bot-avatar', (base64) => { tempBotAvatar = base64; document.getElementById('bot-avatar-preview').src = base64; });
-
-window.submitBot = async () => {
-    if(!currentProfile.isOwner) return;
-    const name = document.getElementById('bot-name').value.trim();
-    const bio = document.getElementById('bot-bio').value.trim();
-    if(!name) return alert("Bot name required");
-
-    const botId = "bot_" + Date.now();
-    const token = "urchin_bot_" + Math.random().toString(36).substr(2) + Date.now().toString(36);
-    
-    const botData = {
-        id: botId, name, bio, avatar: tempBotAvatar || "", token,
-        createdAt: Date.now()
-    };
-    
-    await set(ref(db, `bots/${botId}`), botData);
-    closeModal();
-    alert("Bot Created!");
-};
-
-// -----------------------------------------------------
-// 7. نظام السيرفرات والغرف الصوتية والشات الكامل
-// -----------------------------------------------------
-window.submitCreateServer = async () => {
-    const name = document.getElementById('cs-name').value;
-    const icon = document.getElementById('cs-icon').value || '🌐';
-    if(!name) return;
-
-    const serverId = "srv_" + Date.now();
-    const defaultChannelId = "ch_" + Date.now();
-    const voiceChannelId = "vc_" + Date.now();
-
-    const newServer = {
-        id: serverId, name, icon, ownerId: currentProfile.uid,
-        channels: {
-            [defaultChannelId]: { name: 'general', type: 'text' },
-            [voiceChannelId]: { name: 'Voice Lounge', type: 'voice' }
-        },
-        members: { [currentProfile.uid]: { role: 'owner' } }
-    };
-
-    await set(ref(db, `servers/${serverId}`), newServer);
-    closeModal();
-};
-
-window.openServer = (sid) => {
-    activeServerId = sid;
-    document.querySelectorAll('.server-icon').forEach(el => el.classList.remove('active'));
-    document.getElementById('srv-icon-'+sid).classList.add('active');
-    
-    // جلب القنوات
-    onValue(ref(db, `servers/${sid}`), (snap) => {
-        const srv = snap.val();
-        if(!srv) return;
-        
-        document.getElementById('server-channels').classList.remove('hidden');
-        document.getElementById('active-server-header').innerHTML = `<h3>${srv.icon} ${srv.name}</h3><p class="text-small text-muted">Click for Settings</p>`;
-        
-        let chHtml = '';
-        for(let cid in srv.channels) {
-            const ch = srv.channels[cid];
-            const icon = ch.type === 'voice' ? '🎙️' : '#';
-            chHtml += `<div class="channel-item flex-row items-center gap-5" onclick="joinChannel('${cid}', '${ch.type}', '${ch.name}')">${icon} ${ch.name}</div>`;
-        }
-        document.getElementById('channels-list').innerHTML = chHtml;
-    });
-};
-
-window.joinChannel = (cid, type, name) => {
-    if(type === 'voice') {
-        document.getElementById('voice-controls').classList.remove('hidden');
-        // هنا يتم دمج WebRTC الحقيقي مستقبلاً. حالياً واجهة مرئية محاكية للواقع:
-        isMicOn = true;
-        updateMicUI();
-    } else {
-        activeChannelId = cid;
-        document.getElementById('server-channels').classList.add('hidden'); // إخفاء القائمة
-        document.getElementById('chat-area').classList.remove('hidden'); // عرض شاشة كاملة
-        document.getElementById('bottom-nav').classList.add('hidden'); // إخفاء الناف بار
-        document.getElementById('back-btn').classList.remove('hidden');
-        
-        document.getElementById('chat-header').innerHTML = `<h3># ${name}</h3>`;
-        loadChatMessages();
-    }
-};
-
-window.exitFullScreenChat = () => {
-    activeChannelId = null;
-    document.getElementById('chat-area').classList.add('hidden');
-    document.getElementById('server-channels').classList.remove('hidden');
-    document.getElementById('bottom-nav').classList.remove('hidden');
-    document.getElementById('back-btn').classList.add('hidden');
-};
-
-window.sendMessage = async () => {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if(!text || !activeServerId || !activeChannelId) return;
-
-    await push(ref(db, `servers/${activeServerId}/messages/${activeChannelId}`), {
-        uid: currentProfile.uid,
-        text: text,
-        timestamp: Date.now()
-    });
-    input.value = '';
-};
-
-function loadChatMessages() {
-    const messagesRef = ref(db, `servers/${activeServerId}/messages/${activeChannelId}`);
-    onValue(messagesRef, (snap) => {
-        const msgs = snap.val();
-        let html = '';
-        if(msgs) {
-            Object.values(msgs).forEach(m => {
-                const mine = m.uid === currentProfile.uid;
-                html += `
-                <div class="flex-col ${mine ? 'items-end' : 'items-start'}">
-                    <div style="background:${mine?'var(--accent)':'var(--bg-secondary)'}; padding:10px 14px; border-radius:12px; max-width:80%;">
-                        <p class="text-small bold mb-5 ${mine?'hidden':''}">${m.uid}</p>
-                        <p>${m.text}</p>
-                    </div>
-                </div>`;
-            });
-        }
-        document.getElementById('chat-messages').innerHTML = html;
-        document.getElementById('chat-messages').scrollTop = 999999;
-    });
+function renderBottomNav() {
+  const navs = [
+    {id:'home', icon:'🏠', label:'Home'},
+    {id:'servers', icon:'🌐', label:'Servers'},
+    {id:'settings', icon:'⚙️', label:'Settings'}
+  ];
+  document.getElementById('bottom-nav').innerHTML = navs.map(n => `
+    <button class="nav-btn ${state.page === n.id ? 'active' : ''}" onclick="navTo('${n.id}')">
+      <span style="font-size:18px">${n.icon}</span> ${n.label}
+    </button>
+  `).join('');
 }
 
-// Voice Simulation
-window.toggleMic = () => {
-    isMicOn = !isMicOn;
-    updateMicUI();
-};
-function updateMicUI() {
-    const btn = document.getElementById('btn-mic');
-    btn.innerHTML = isMicOn ? '🎙️ Mic On' : '🔇 Mic Off';
-    btn.className = isMicOn ? 'btn-success flex-1' : 'btn-danger flex-1';
-}
-window.leaveVoice = () => { document.getElementById('voice-controls').classList.add('hidden'); };
-
-// -----------------------------------------------------
-// 8. المنشورات (Posts)
-// -----------------------------------------------------
-window.submitPost = async () => {
-    const text = document.getElementById('post-text').value.trim();
-    if(!text) return;
-    await push(ref(db, 'posts'), { uid: currentProfile.uid, text, timestamp: Date.now() });
-    document.getElementById('post-text').value = '';
-    closeModal();
-};
-
-function setupRealtimeListeners() {
-    // استماع المنشورات
-    onValue(ref(db, 'posts'), async (snap) => {
-        const posts = snap.val();
-        if(!posts) return document.getElementById('posts-container').innerHTML = '<p class="text-center text-muted">No posts yet 🌊</p>';
-        
-        // نأتي بأسماء المستخدمين (في تطبيق حقيقي يتم حفظ الاسم مع البوست أو عمل Join)
-        let html = '';
-        const sorted = Object.entries(posts).sort((a,b)=>b[1].timestamp - a[1].timestamp);
-        
-        for(let [id, p] of sorted) {
-            html += `
-            <div class="post-card">
-                <div class="flex-row items-center gap-10 mb-10">
-                    <div class="avatar-small"></div>
-                    <div>
-                        <span class="bold">${p.uid === currentProfile.uid ? currentProfile.displayName : 'User'}</span>
-                    </div>
-                </div>
-                <p>${p.text}</p>
-            </div>`;
-        }
-        document.getElementById('posts-container').innerHTML = html;
-    });
-
-    // استماع السيرفرات
-    onValue(ref(db, 'servers'), (snap) => {
-        const servers = snap.val();
-        let html = '';
-        if(servers) {
-            for(let sid in servers) {
-                const s = servers[sid];
-                // إظهار السيرفرات التي أنت عضو فيها فقط
-                if(s.members && s.members[currentProfile.uid]) {
-                    html += `<div id="srv-icon-${sid}" class="server-icon" onclick="openServer('${sid}')">${s.icon}</div>`;
-                }
-            }
-        }
-        document.getElementById('server-list').innerHTML = html;
-    });
-    
-    // استماع البوتات (للمالك فقط)
-    if(currentProfile.isOwner) {
-        onValue(ref(db, 'bots'), (snap) => {
-            const bots = snap.val();
-            let html = '';
-            if(bots) {
-                for(let key in bots) {
-                    const b = bots[key];
-                    html += `
-                    <div class="bot-item">
-                        <div class="flex-row items-center gap-10">
-                            <div class="avatar-small" style="background-image:url('${b.avatar}')"></div>
-                            <div>
-                                    <h4>${b.name} <span class="badge-bot">BOT</span></h4>
-                                <p class="text-small text-muted">${b.bio}</p>
-                            </div>
-                        </div>
-                        <div class="token-box">TOKEN: ${b.token}</div>
-                        <div class="token-box text-accent border-none mt-5">Invite: https://urchin.app/bot/add/${b.id}</div>
-                    </div>`;
-                }
-            }
-            document.getElementById('bots-list').innerHTML = html;
-        });
-    }
+function renderHome() {
+  let html = `<div style="padding:16px;">`;
+  html += `<button class="btn-primary" style="margin-bottom:20px" onclick="openModal('post')">📝 Write a Post</button>`;
+  
+  if(state.posts.length === 0) html += `<p style="text-align:center; color:var(--text-muted); margin-top:50px;">No posts yet!</p>`;
+  
+  state.posts.forEach(p => {
+    const u = state.users[p.uid] || {displayName: "User", username: "user"};
+    html += `
+      <div style="background:var(--bg-secondary); border:1px solid var(--border2); border-radius:16px; padding:16px; margin-bottom:12px;">
+        <div class="flex-row items-center gap-10" style="margin-bottom:10px">
+          <div class="avatar" style="width:36px;height:36px;background-image:url('${u.avatar||''}');background-color:var(--accent);">${!u.avatar ? u.displayName[0] : ''}</div>
+          <div>
+            <div style="font-weight:bold; font-size:14px;">${u.displayName}</div>
+            <div style="font-size:11px; color:var(--text-muted)">@${u.username}</div>
+          </div>
+        </div>
+        <div style="font-size:14px; line-height:1.5;">${p.text}</div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  return html;
 }
 
-// -----------------------------------------------------
-// 9. إعدادات السيرفر (Server Settings)
-// -----------------------------------------------------
-let tempServerBanner = null;
-handleImageUpload('ss-banner', (base64) => { 
-    tempServerBanner = base64; 
-    alert("تم اختيار بنر السيرفر بنجاح!"); 
-});
+// ══════════════════════════════════════════════
+//  SERVERS (With Image Upload instead of Emoji)
+// ══════════════════════════════════════════════
+function renderServers() {
+  if(state.activeSid) return renderChat();
 
-window.openServerSettings = async () => {
-    if(!activeServerId) return;
-    const snap = await get(ref(db, `servers/${activeServerId}`));
-    if(!snap.exists()) return;
-    
-    const srv = snap.val();
-    
-    // التحقق من الصلاحيات (فقط منشئ السيرفر يقدر يغير إعداداته)
-    if(srv.ownerId !== currentProfile.uid) {
-        return alert("عذراً، فقط مالك السيرفر يقدر يغير الإعدادات!");
+  let srvList = state.servers.map(s => `
+    <div class="srv-icon" onclick="openServer('${s.id}')" style="margin-bottom:10px;">
+      ${s.iconBase64 ? `<img src="${s.iconBase64}">` : `<span style="color:var(--accent); font-weight:bold">${s.name[0]}</span>`}
+    </div>
+  `).join('');
+
+  return `
+    <div class="servers-layout">
+      <div class="srv-sidebar">
+        ${srvList}
+        <div class="srv-icon" style="background:var(--bg-tertiary); color:var(--accent);" onclick="openModal('createServer')">➕</div>
+      </div>
+      <div class="ch-sidebar flex-center" style="color:var(--text-muted)">
+        <p>Select or create a server</p>
+      </div>
+    </div>
+  `;
+}
+
+window.openServer = (sid) => { state.activeSid = sid; navTo('servers'); };
+window.closeServer = () => { state.activeSid = null; navTo('servers'); };
+
+function renderChat() {
+  const srv = state.servers.find(s => s.id === state.activeSid);
+  if(!srv) return '';
+  return `
+    <div class="flex-col h-full" style="height:100%;">
+      <div class="top-bar flex-row items-center gap-10">
+        <button class="btn-owner" style="border:none;background:var(--bg-hover);color:var(--text-primary)" onclick="closeServer()">🔙</button>
+        <div class="avatar" style="width:30px;height:30px;background-image:url('${srv.iconBase64||''}');background-color:var(--accent);">${!srv.iconBase64 ? srv.name[0] : ''}</div>
+        <div style="font-weight:bold">${srv.name}</div>
+      </div>
+      <div class="flex-1 overflow-y" style="padding:16px;">
+        <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:50px;">Welcome to the start of ${srv.name}!</p>
+      </div>
+      <div style="padding:10px; border-top:1px solid var(--border2); display:flex; gap:10px;">
+        <input type="text" class="input-modern" placeholder="Message...">
+        <button class="btn-primary" style="width:auto">Send</button>
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS & PROFILE
+// ══════════════════════════════════════════════
+function renderSettings() {
+  let botsHtml = '';
+  if(state.me.isOwner) {
+    botsHtml = `
+      <div style="margin-top:30px; border-top:1px solid var(--border2); padding-top:20px;">
+        <h3 style="color:var(--accent); margin-bottom:15px;">🤖 My Bots</h3>
+        ${state.bots.map(b => `
+          <div style="background:var(--bg-secondary); border:1px solid var(--border2); border-radius:12px; padding:15px; margin-bottom:10px;">
+            <div class="flex-row items-center gap-10" style="margin-bottom:10px">
+              <div class="avatar" style="width:40px;height:40px;background-image:url('${b.avatar||''}');background-color:var(--accent);"></div>
+              <div>
+                <div style="font-weight:bold">${b.name} <span style="background:var(--accent-dim);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:10px;">BOT</span></div>
+                <div style="font-size:11px;color:var(--text-muted)">${b.bio}</div>
+              </div>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:5px;">Token (Keep Secret):</div>
+            <div style="background:var(--bg-primary); padding:8px; border-radius:6px; font-family:monospace; font-size:10px; color:var(--warn); margin-bottom:10px;">${b.token}</div>
+            
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:5px;">Official Invite Link:</div>
+            <div style="background:var(--bg-primary); padding:8px; border-radius:6px; font-family:monospace; font-size:10px; color:var(--accent);">https://urchin.app/bot/add/${b.id}</div>
+            
+            <p style="font-size:10px; color:var(--success); margin-top:10px;">✅ يدعم أوامر السلاش (/) والبريفكس (!) ويعمل على أي استضافة.</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  return `
+    <div style="padding:16px;">
+      
+      <div style="position:relative; height:120px; border-radius:16px; background-image:url('${state.me.banner||''}'); background-color:var(--bg-hover); background-size:cover; background-position:center; cursor:pointer;" onclick="document.getElementById('in-banner').click()">
+        <div class="flex-center" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); color:#fff; font-size:12px; font-weight:bold; border-radius:16px;">📷 Change Banner</div>
+      </div>
+      <input type="file" id="in-banner" hidden accept="image/*" onchange="uploadImage(this, 'banner')">
+
+      <div style="display:flex; align-items:center; gap:15px; margin-top:-20px; padding-left:15px;">
+        <div style="position:relative; width:80px; height:80px; border-radius:50%; border:4px solid var(--bg-primary); background-image:url('${state.me.avatar||''}'); background-color:var(--accent); background-size:cover; cursor:pointer;" onclick="document.getElementById('in-avatar').click()">
+           <div class="flex-center" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); color:#fff; font-size:20px; border-radius:50%;">📷</div>
+        </div>
+        <input type="file" id="in-avatar" hidden accept="image/*" onchange="uploadImage(this, 'avatar')">
+        <div style="margin-top:20px;">
+          <h2 style="font-size:18px;">${state.me.displayName}</h2>
+          <p style="font-size:12px; color:var(--text-muted)">@${state.me.username}</p>
+        </div>
+      </div>
+
+      <div style="margin-top:30px;">
+        <button class="btn-owner" style="width:100%; padding:12px; color:var(--danger); border-color:var(--danger); background:transparent;" onclick="logout()">Sign Out</button>
+      </div>
+
+      ${botsHtml}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+//  IMAGE UPLOAD HANDLER (Base64)
+// ══════════════════════════════════════════════
+window.uploadImage = (input, type) => {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = e.target.result;
+    if(type === 'avatar' || type === 'banner') {
+      state.me[type] = base64;
+      state.users[state.me.id][type] = base64;
+      saveState(); navTo('settings');
+    } else if (type === 'botAvatar') {
+      document.getElementById('bot-avatar-preview').style.backgroundImage = \`url('\${base64}')\`;
+      document.getElementById('bot-avatar-preview').dataset.b64 = base64;
+    } else if (type === 'srvIcon') {
+      document.getElementById('srv-icon-preview').style.backgroundImage = \`url('\${base64}')\`;
+      document.getElementById('srv-icon-preview').dataset.b64 = base64;
     }
-    
-    document.getElementById('ss-name').value = srv.name || '';
-    document.getElementById('ss-bio').value = srv.bio || '';
-    openModal('modal-server-settings');
+  };
+  reader.readAsDataURL(file);
 };
 
-window.saveServerSettings = async () => {
-    if(!activeServerId) return;
-    const newName = document.getElementById('ss-name').value.trim();
-    const newBio = document.getElementById('ss-bio').value.trim();
-    
-    if(!newName) return alert("اسم السيرفر مطلوب!");
-    
-    let updates = { name: newName, bio: newBio };
-    if(tempServerBanner) updates.banner = tempServerBanner; // حفظ البنر كـ Base64
-    
-    await update(ref(db, `servers/${activeServerId}`), updates);
-    alert("تم تحديث إعدادات السيرفر بنجاح!");
-    closeModal();
+// ══════════════════════════════════════════════
+//  MODALS & ACTIONS
+// ══════════════════════════════════════════════
+window.openModal = (type) => {
+  const overlay = document.getElementById('modal-overlay');
+  const content = document.getElementById('modal-content');
+  overlay.classList.remove('hidden');
+
+  if(type === 'post') {
+    content.innerHTML = `
+      <h3 style="margin-bottom:15px;">New Post</h3>
+      <textarea id="post-text" class="input-modern" rows="4" placeholder="What's happening?"></textarea>
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn-primary" onclick="submitPost()">Post</button>
+        <button class="btn-owner" style="flex:1; border:none; background:var(--bg-hover); color:var(--text-muted);" onclick="closeModal()">Cancel</button>
+      </div>
+    `;
+  }
+  else if(type === 'createServer') {
+    content.innerHTML = `
+      <h3 style="margin-bottom:15px;">Create Server</h3>
+      
+      <div style="display:flex; justify-content:center; margin-bottom:15px;">
+        <div id="srv-icon-preview" style="width:80px; height:80px; border-radius:16px; background-color:var(--bg-hover); background-size:cover; background-position:center; cursor:pointer; border:2px dashed var(--border2);" onclick="document.getElementById('in-srv-icon').click()">
+          <div class="flex-center" style="width:100%; height:100%; color:var(--text-muted); font-size:12px;">Upload Image</div>
+        </div>
+        <input type="file" id="in-srv-icon" hidden accept="image/*" onchange="uploadImage(this, 'srvIcon')">
+      </div>
+
+      <input type="text" id="srv-name" class="input-modern mb-10" placeholder="Server Name">
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn-primary" onclick="submitServer()">Create</button>
+        <button class="btn-owner" style="flex:1; border:none; background:var(--bg-hover); color:var(--text-muted);" onclick="closeModal()">Cancel</button>
+      </div>
+    `;
+  }
+  else if(type === 'bot') {
+    content.innerHTML = `
+      <h3 style="margin-bottom:15px; color:var(--accent);">🤖 Create Bot</h3>
+      <div style="display:flex; justify-content:center; margin-bottom:15px;">
+        <div id="bot-avatar-preview" style="width:60px; height:60px; border-radius:50%; background-color:var(--bg-hover); background-size:cover; cursor:pointer; border:2px dashed var(--border2);" onclick="document.getElementById('in-bot-avatar').click()"></div>
+        <input type="file" id="in-bot-avatar" hidden accept="image/*" onchange="uploadImage(this, 'botAvatar')">
+      </div>
+      <input type="text" id="bot-name" class="input-modern mb-10" placeholder="Bot Name" style="margin-bottom:10px;">
+      <input type="text" id="bot-bio" class="input-modern mb-10" placeholder="Bot Bio">
+      <p style="font-size:10px; color:var(--text-muted); margin-top:10px;">Bot will get an official invite link and token.</p>
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button class="btn-primary" onclick="submitBot()">Create Bot</button>
+        <button class="btn-owner" style="flex:1; border:none; background:var(--bg-hover); color:var(--text-muted);" onclick="closeModal()">Cancel</button>
+      </div>
+    `;
+  }
 };
 
-// -----------------------------------------------------
-// 10. النوافذ المنبثقة (Modals Helpers)
-// -----------------------------------------------------
-window.openModal = (id) => {
-    document.getElementById('modal-overlay').classList.remove('hidden');
-    document.querySelectorAll('.modal-box').forEach(m => m.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
+window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
+
+window.submitPost = () => {
+  const text = document.getElementById('post-text').value.trim();
+  if(!text) return;
+  state.posts.unshift({ id: uid(), uid: state.me.id, text, time: Date.now() });
+  saveState(); closeModal(); navTo('home');
 };
 
-window.closeModal = (e) => {
-    // إغلاق النافذة فقط إذا ضغط المستخدم خارجها أو استدعينا الفنكشن بدون Event
-    if(e && e.target.id !== 'modal-overlay') return;
-    document.getElementById('modal-overlay').classList.add('hidden');
+window.submitServer = () => {
+  const name = document.getElementById('srv-name').value.trim();
+  const iconBase64 = document.getElementById('srv-icon-preview').dataset.b64 || '';
+  if(!name) return alert("Server name required");
+  const srv = { id: uid(), name, iconBase64, ownerId: state.me.id };
+  state.servers.push(srv);
+  saveState(); closeModal(); navTo('servers');
 };
+
+window.submitBot = () => {
+  const name = document.getElementById('bot-name').value.trim();
+  const bio = document.getElementById('bot-bio').value.trim();
+  const avatar = document.getElementById('bot-avatar-preview').dataset.b64 || '';
+  if(!name) return alert("Bot name required");
+  
+  const botId = uid();
+  const b = { id: botId, name, bio, avatar, token: "urchin_bot_"+uid()+"."+uid() };
+  state.bots.push(b);
+  saveState(); closeModal(); navTo('settings');
+};
+
+window.logout = () => { S.del("session"); location.reload(); };
