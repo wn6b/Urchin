@@ -2,38 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Urchin - Mobile App</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #080a10; --bg-secondary: #111623; --bg-tertiary: #161b25; --bg-hover: #1e2636;
+      --border: #1e2636; --border2: #252d3d;
+      --accent: #5b8def; --accent2: #4ecdc4; --accent-dim: #5b8def22;
+      --text-primary: #e8eaf0; --text-secondary: #a8b2cc; --text-muted: #6b7a99;
+      --danger: #ef5350; --success: #2ecc71; --warn: #f7b731;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sora', sans-serif; }
+    body { background: var(--bg-primary); color: var(--text-primary); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-thumb { background: #252d3d; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .fade { animation: fadeUp .28s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+    
+    /* Inputs & Buttons */
+    .input-st { background: #0d0f14; border: 1.5px solid #252d3d; color: #e8eaf0; border-radius: 12px; padding: 10px 14px; width: 100%; outline: none; font-size: 14px; transition: .2s; }
+    .input-st:focus { border-color: var(--accent); }
+    .lbl-st { font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .btn-st { background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 11px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; transition: .2s; }
+    .btn-st:hover { opacity: 0.9; }
+    
+    /* Screens */
+    #auth-screen, #app-screen, #loading-screen { display: none; height: 100%; width: 100%; }
+    .active-screen { display: flex !important; }
+    
+    /* Auth Styles */
+    #auth-screen { align-items: center; justify-content: center; padding: 16px; position: relative; }
+    .auth-box { background: #161b25; border-radius: 20px; padding: 28px; border: 1px solid #252d3d; box-shadow: 0 24px 64px rgba(0,0,0,.4); width: 100%; max-width: 400px; z-index: 10; }
+    .auth-tabs { display: flex; background: #0d0f14; border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 8px; border-radius: 9px; border: none; cursor: pointer; background: transparent; color: #6b7a99; font-weight: 600; font-size: 14px; transition: .2s; }
+    .auth-tab.active { background: var(--accent); color: #fff; }
+    
+    /* Top Bar & App Layout */
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border2); background: var(--bg-secondary); z-index: 50; flex-shrink: 0; }
+    .app-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 900; padding: 16px; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: var(--bg-secondary); border-radius: 20px; padding: 24px; width: 100%; max-width: 440px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border); position: relative; }
+    .modal-close { position: absolute; top: 20px; right: 20px; background: var(--bg-hover); border: none; border-radius: 8px; padding: 6px; cursor: pointer; color: var(--text-muted); }
+    
+    /* Badges */
+    .badge-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; margin-left: 4px; cursor: pointer; transition: .2s; }
+    .badge-icon:hover { transform: scale(1.1); }
+    .badge-dev { color: #a29bfe; background: rgba(162, 155, 254, 0.2); }
+    .badge-admin { color: #ef5350; background: rgba(239, 83, 80, 0.2); }
+    .badge-friend { color: #fd79a8; background: rgba(253, 121, 168, 0.2); }
+    .badge-famous { color: #f7b731; background: rgba(247, 183, 49, 0.2); }
+    .badge-verified { color: #4ecdc4; background: rgba(78, 205, 196, 0.2); }
+    
+    .avatar-wrapper { position: relative; display: inline-block; flex-shrink: 0; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 18px; text-transform: uppercase; }
+  </style>
 </head>
 <body>
 
-  <div id="mobile-frame">
-
-    <div id="loading-screen" class="screen flex-center col">
-      <div class="spinner"></div>
-      <h1 class="logo-text">Urchin</h1>
-      <p class="sub-text">Social Platform</p>
-    </div>
-
-    <div id="auth-screen" class="screen hidden">
-      </div>
-
-    <div id="app-screen" class="screen hidden flex-col">
-      <header id="top-bar" class="top-bar flex-row items-center justify-between"></header>
-
-      <main id="main-content" class="flex-1 overflow-y relative"></main>
-
-      <nav id="bottom-nav" class="bottom-bar flex-row justify-around"></nav>
-    </div>
-
-    <div id="modal-overlay" class="modal-overlay hidden flex-center">
-      <div id="modal-content" class="modal-box"></div>
-    </div>
-
+  <div id="loading-screen" class="active-screen" style="flex-direction: column; justify-content: center; align-items: center;">
+    <div style="color:var(--accent); font-size: 40px; margin-bottom: 10px;">🌊</div>
+    <h2 style="letter-spacing: -1px;">Urchin 2026</h2>
+    <div style="font-family: 'JetBrains Mono'; font-size: 13px; color: var(--text-muted);">Connecting to Wano Studio...</div>
   </div>
 
-  <script src="app.js"></script>
+  <div id="auth-screen">
+    <div class="auth-box">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="color: #5b8def; font-size: 40px;">🌊</div>
+        <div style="font-size: 28px; font-weight: 900; letter-spacing: -1px; margin-top: 8px;">Urchin</div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Sign Up</button>
+      </div>
+      <div id="auth-form" style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" id="auth-name" class="input-st" placeholder="Display Name" style="display: none;">
+        <input type="email" id="auth-email" class="input-st" placeholder="Email">
+        <div style="position: relative;" id="auth-user-container" style="display: none;">
+          <input type="text" id="auth-username" class="input-st" placeholder="Username (exactly 4 chars)" maxlength="4" style="display: none;">
+        </div>
+        <input type="password" id="auth-pass" class="input-st" placeholder="Password">
+        <div id="auth-error" style="color: #ef5350; font-size: 13px; text-align: center; display: none;"></div>
+        <button class="btn-st" id="auth-btn" onclick="handleAuth()">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen" style="flex-direction: column;">
+    <div class="top-bar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="color: var(--accent); font-size: 24px;">🌊</div>
+        <div>
+          <div style="font-weight: 900; font-size: 17px; letter-spacing: -.5px;">Urchin</div>
+          <div id="user-role-badge" style="font-size: 9px; color: var(--warn); font-family: 'JetBrains Mono', monospace;"></div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button id="owner-add-tri" onclick="openModal('modal-tri')" style="display:none; background:rgba(247, 183, 49, 0.1); border:1px solid #f7b731; color:#f7b731; border-radius:9px; padding:6px 10px; font-size:12px; cursor:pointer;">⭐ Tri</button>
+        <div class="avatar-wrapper" onclick="openProfile(currentUser.uid)" style="cursor: pointer;">
+          <img id="my-avatar" class="avatar" style="width: 34px; height: 34px;" src="" alt="">
+        </div>
+        <button onclick="logout()" style="background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px;">🚪</button>
+      </div>
+    </div>
+
+    <div class="app-content fade" style="padding: 16px; overflow-y: auto;" id="main-feed">
+      <div id="users-row" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 16px;"></div>
+      
+      <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <input type="text" id="post-input" class="input-st" placeholder="What's on your mind, 2026?">
+        <button class="btn-st" style="width: auto; padding: 10px 20px;" onclick="createPost()">Post</button>
+      </div>
+      <div id="posts-container"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-profile" onclick="closeModal('modal-profile')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal('modal-profile')">✖</button>
+      <div id="prof-banner" style="height: 100px; background: var(--bg-tertiary); border-radius: 12px; margin-bottom: -40px; background-size: cover; background-position: center; position: relative; cursor: pointer;" onclick="document.getElementById('banner-upload').click()"></div>
+      <input type="file" id="banner-upload" style="display:none" accept="image/*" onchange="uploadImage(event, 'banner')">
+      
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; z-index: 2;">
+        <div class="avatar-wrapper" style="cursor: pointer;" onclick="document.getElementById('avatar-upload').click()">
+          <img id="prof-avatar" class="avatar" style="width: 80px; height: 80px; border: 4px solid var(--bg-secondary);" src="" alt="">
+        </div>
+        <input type="file" id="avatar-upload" style="display:none" accept="image/*" onchange="uploadImage(event, 'avatar')">
+        
+        <div style="text-align: center;">
+          <div style="font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span id="prof-name">Name</span>
+            <div id="prof-badges" style="display: flex; gap: 4px;"></div>
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted);" id="prof-username">@username</div>
+        </div>
+        
+        <div id="owner-badge-manager" style="display:none; width: 100%; margin-top: 15px; padding: 10px; background: var(--bg-hover); border-radius: 12px;">
+          <div class="lbl-st" style="text-align: center; margin-bottom: 10px;">👑 Owner Controls - Manage Badges</div>
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-st badge-dev" style="width:auto; padding: 6px 12px; font-size: 12px;" onclick="toggleBadge('dev')">👨‍💻 Dev</button>
+            <button class="btn-st badge-admin" style="width:auto; padding: 6px 12px; font-size: 12px;" onclick="toggleBadge('admin')">🛡 Admin</button>
+            <button class="btn-st badge-friend" style="width:auto; padding: 6px 12px; font-size: 12px;" onclick="toggleBadge('friend')">🤝 Friend</button>
+            <button class="btn-st badge-famous" style="width:auto; padding: 6px 12px; font-size: 12px;" onclick="toggleBadge('famous')">⭐ Famous</button>
+            <button class="btn-st badge-verified" style="width:auto; padding: 6px 12px; font-size: 12px;" onclick="toggleBadge('verified')">✔ Verified</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-tri" onclick="closeModal('modal-tri')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal('modal-tri')">✖</button>
+      <h3 style="margin-bottom: 15px; color: var(--warn);">⭐ Create Tri User</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="email" id="tri-email" class="input-st" placeholder="Email">
+        <input type="text" id="tri-name" class="input-st" placeholder="Display Name">
+        <input type="text" id="tri-username" class="input-st" placeholder="Username (exactly 3 chars)" maxlength="3">
+        <input type="password" id="tri-pass" class="input-st" placeholder="Password">
+        <button class="btn-st" style="background: var(--warn); color: #000;" onclick="createTriUser()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
 </body>
 </html>
